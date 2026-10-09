@@ -3,12 +3,19 @@
 PDFのページを **並べ替え・削除・回転・結合** できる無料のChrome拡張機能です。
 処理はすべてブラウザ内で完結し、PDFを外部のサーバーに送信しません。
 
+- 導入手順・ダウンロード：https://gaccho-code.github.io/pdf-editor/install.html
+- 要件定義書：https://gaccho-code.github.io/pdf-editor/requirements.html
+- 最新版のZIP：https://github.com/Gaccho-code/pdf-editor/releases/latest/download/pdf-editor.zip
+
 ## インストール（開発者モードで読み込む）
 
-1. Chromeで `chrome://extensions` を開く
-2. 右上の「デベロッパー モード」をオンにする
-3. 「パッケージ化されていない拡張機能を読み込む」をクリックし、この `04_pdf-editor` フォルダを選ぶ
-4. ツールバーのパズルアイコンから「PDF Page Editor」をピン留めしておくと便利
+利用者向けの詳しい手順は[導入手順書](https://gaccho-code.github.io/pdf-editor/install.html)を参照。以下は開発者向けの要約。
+
+1. 最新版のZIPをダウンロードして展開する（ソースから使う場合はリポジトリをクローンする）
+2. Chromeで `chrome://extensions` を開く
+3. 右上の「デベロッパー モード」をオンにする
+4. 「パッケージ化されていない拡張機能を読み込む」をクリックし、`manifest.json` のあるフォルダを選ぶ
+5. ツールバーのパズルアイコンから「PDF Page Editor」をピン留めしておくと便利
 
 ## 使い方
 
@@ -41,16 +48,32 @@ lib/            同梱ライブラリ（CDNは使わない）
   pdf.min.mjs, pdf.worker.min.mjs, cmaps/, standard_fonts/  … pdf.js 4.10.38（Apache-2.0）サムネイル表示用
   pdf-lib.min.js  … pdf-lib 1.17.1（MIT）PDFの書き出し用
 icons/          拡張機能アイコン
+scripts/package.sh  配布用ZIPを dist/ に作成
+docs/           GitHub Pages で公開する資料（トップ・導入手順書・要件定義書）
+.github/workflows/release.yml  タグのプッシュでZIPを作り Releases に登録
 ```
 
-## 社内配布用ZIPの作成
+## リリース手順
+
+1. `manifest.json` の `version` を上げてコミットし、プッシュする
+2. 同じ版のタグを付けてプッシュする
 
 ```bash
-./scripts/package.sh
+git tag v1.2.0 && git push origin v1.2.0
 ```
 
-`dist/pdf-editor-v<バージョン>.zip` ができる。展開すると `pdf-editor/` フォルダが1つ出てくる構成で、利用者はこのフォルダをChromeで読み込む。
+GitHub Actions がZIPを作り、`pdf-editor.zip` という名前で Releases に登録する（タグと `manifest.json` の版が違うと失敗する）。導入手順書のダウンロードボタンは常に最新リリースを指すので、手順書の修正は不要。
+
+手元でZIPだけ作る場合は `./scripts/package.sh` を実行する（`dist/pdf-editor-v<版>.zip` ができる）。
+
+## 資料（GitHub Pages）
+
+`docs/` の内容が、`main` ブランチへのプッシュで https://gaccho-code.github.io/pdf-editor/ に反映される。リポジトリは公開なので、秘密情報・個人名・連絡先・社内URLは載せないこと。
 
 ビルド工程はありません。ファイルを編集したら `chrome://extensions` で再読み込みすれば反映されます。
 
 ローカルで画面だけ確認したい場合は、`python3 -m http.server --directory 04_pdf-editor` で起動して `editor.html` を開いてもかまいません（拡張機能のAPIを使うのは `background.js` だけです）。
+
+## ライセンス
+
+MIT License（[LICENSE](LICENSE)）。同梱ライブラリはそれぞれのライセンスに従う（pdf.js：Apache-2.0、pdf-lib：MIT。`lib/` 内のライセンス文書を参照）。

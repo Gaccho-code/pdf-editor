@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="icon.png">
+<title>PDF編集ツール 導入手順</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: 1カラムの手順書。番号付きステップを縦に並べ、各ステップに「画面の見本」を添える */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --fg: #1c2230;
+  --muted: #5d6677;
+  --line: #dde1e8;
+  --accent: #2f5fd0;
+  --accent-weak: #e7eefc;
+  --mark: #e0422f;
+  --warn: #8a5200;
+  --warn-weak: #fdf1dd;
+  --chrome-bar: #eef1f6;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171d; --surface: #1c2029; --fg: #e5e8ee; --muted: #9aa3b3; --line: #2f3542;
+    --accent: #7ea2ff; --accent-weak: #1f2b47; --mark: #ff7a66; --warn: #f0b35a; --warn-weak: #3a2b14; --chrome-bar: #252a35;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171d; --surface: #1c2029; --fg: #e5e8ee; --muted: #9aa3b3; --line: #2f3542;
+  --accent: #7ea2ff; --accent-weak: #1f2b47; --mark: #ff7a66; --warn: #f0b35a; --warn-weak: #3a2b14; --chrome-bar: #252a35;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--fg); font: 16px/1.85 var(--font-body); padding-inline: 16px; }
+.wrap { max-width: 760px; margin: 0 auto; padding-block: 44px 72px; display: grid; gap: 36px; }
+
+header { display: grid; gap: 12px; }
+.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; color: var(--accent); }
+h1 { font-size: 30px; line-height: 1.35; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--muted); }
+.need { display: flex; flex-wrap: wrap; gap: 8px; }
+.need span { font-size: 14px; padding: 6px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+
+.os { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+.os button {
+  font: 500 15px var(--font-body); padding: 8px 18px; border-radius: 8px; cursor: pointer;
+  border: 2px solid var(--line); background: var(--surface); color: var(--fg);
+}
+.os button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-weak); color: var(--accent); }
+.os button:focus-visible, .copy:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+h2 { font-size: 21px; margin: 0; }
+.part { display: grid; gap: 16px; }
+.part > p { margin: 0; color: var(--muted); }
+
+.step { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 12px; min-width: 0; }
+.step-head { display: flex; align-items: center; gap: 12px; }
+.num { flex: none; width: 34px; height: 34px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font: 500 16px var(--font-mono); }
+.step h3 { margin: 0; font-size: 18px; line-height: 1.4; }
+.step ol, .step ul { margin: 0; padding-left: 1.4em; display: grid; gap: 4px; }
+.step p { margin: 0; }
+b.ui { font-weight: 700; color: var(--accent); }
+
+.note { font-size: 14px; background: var(--warn-weak); color: var(--fg); border-radius: 8px; padding: 10px 14px; }
+.note strong { color: var(--warn); }
+
+.copyrow { display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap; }
+.copyrow code { flex: 1 1 220px; font: 500 17px var(--font-mono); padding: 10px 14px; border-radius: 8px; background: var(--chrome-bar); border: 1px solid var(--line); user-select: all; overflow-wrap: anywhere; }
+.copy { font: 500 15px var(--font-body); padding: 10px 18px; border-radius: 8px; border: 0; background: var(--accent); color: #fff; cursor: pointer; }
+
+/* 画面の見本(実際の画面を簡略化したもの) */
+.mock { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; font-size: 13px; background: var(--surface); }
+.mock-cap { font-size: 12px; color: var(--muted); margin-top: -4px; }
+.mock-bar { background: var(--chrome-bar); padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+.mock-title { font-weight: 700; margin-right: auto; }
+.mock-body { padding: 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.mock-btn { border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; background: var(--surface); }
+.toggle { display: inline-flex; align-items: center; gap: 8px; }
+.toggle i { width: 34px; height: 18px; border-radius: 9px; background: var(--accent); position: relative; }
+.toggle i::after { content: ""; position: absolute; right: 2px; top: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff; }
+.hl { outline: 3px solid var(--mark); outline-offset: 3px; border-radius: 6px; }
+.tag { font-size: 11px; font-weight: 700; color: var(--mark); }
+.folder { display: grid; gap: 2px; font-family: var(--font-mono); font-size: 13px; }
+.folder div { padding: 3px 8px; border-radius: 4px; }
+.folder .dim { color: var(--muted); }
+.folder .pick { background: var(--accent-weak); }
+.icon-btn { width: 26px; height: 26px; border-radius: 50%; display: inline-grid; place-items: center; border: 1px solid var(--line); background: var(--surface); font-size: 14px; }
+
+.faq { display: grid; gap: 10px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+summary { cursor: pointer; font-weight: 700; }
+details p, details ul { margin: 8px 0 0; }
+details ul { padding-left: 1.3em; }
+
+.use { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.use div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.use b { display: block; margin-bottom: 4px; }
+.use p { margin: 0; font-size: 14px; color: var(--muted); }
+
+.dl { display: inline-block; font: 700 16px var(--font-body); padding: 12px 24px; border-radius: 10px; background: var(--accent); color: #fff; text-decoration: none; }
+.dl:hover { filter: brightness(1.1); }
+.dl:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+footer a { color: var(--accent); }
+.placeholder { background: var(--warn-weak); color: var(--warn); padding: 0 4px; border-radius: 3px; font-weight: 700; }
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 16px; }
+
+@media (max-width: 480px) {
+  body { font-size: 15px; }
+  .wrap { padding-block: 28px 48px; gap: 28px; }
+  h1 { font-size: 24px; }
+  .step { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">社内向け · 導入手順</div>
+    <h1>PDF編集ツールを使えるようにする手順</h1>
+    <p class="lead">PDFのページの並べ替え・削除・回転・結合が、無料でできるようになります。作業は最初の1回だけで、5分ほどで終わります。上から順番に進めてください。</p>
+    <div class="need">
+      <span>必要なもの：Google Chrome</span>
+      <span>所要時間：約5分</span>
+    </div>
+    <div class="os" role="group" aria-label="お使いのパソコン">
+      お使いのパソコンを選んでください：
+      <button type="button" id="os-win" data-os="win" aria-pressed="true">Windows</button>
+      <button type="button" id="os-mac" data-os="mac" aria-pressed="false">Mac</button>
+    </div>
+  </header>
+
+  <section class="part">
+    <h2>導入する（最初の1回だけ）</h2>
+
+    <div class="step">
+      <div class="step-head"><span class="num">1</span><h3>ファイルをダウンロードする</h3></div>
+      <ol>
+        <li>下の <b class="ui">ダウンロード</b> ボタンを押します。</li>
+        <li><b class="ui">pdf-editor.zip</b> というファイルがダウンロードされます。</li>
+      </ol>
+      <p><a class="dl" href="https://github.com/Gaccho-code/pdf-editor/releases/latest/download/pdf-editor.zip">ダウンロード（pdf-editor.zip）</a></p>
+      <p class="mock-cap">ダウンロードしたファイルは、ふつうは「ダウンロード」フォルダに入ります。</p>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="num">2</span><h3>ファイルを展開して「ドキュメント」に置く</h3></div>
+      <ol data-os-only="win">
+        <li>「ダウンロード」フォルダを開きます。</li>
+        <li><b class="ui">pdf-editor.zip</b> を<strong>右クリック</strong>し、<b class="ui">すべて展開</b> を選びます。</li>
+        <li><b class="ui">展開</b> ボタンを押します。<b class="ui">pdf-editor</b> というフォルダができます。</li>
+        <li>そのフォルダを開くと、中にもう1つ <b class="ui">pdf-editor</b> フォルダがあります。</li>
+        <li>この<strong>中のほうの</strong> <b class="ui">pdf-editor</b> フォルダを、左側の <b class="ui">ドキュメント</b> にドラッグして移動します。</li>
+      </ol>
+      <ol data-os-only="mac" hidden>
+        <li>Finderで「ダウンロード」フォルダを開きます。</li>
+        <li><b class="ui">pdf-editor.zip</b> を<strong>ダブルクリック</strong>します。<b class="ui">pdf-editor</b> フォルダができます。</li>
+        <li>この <b class="ui">pdf-editor</b> フォルダを、左側の <b class="ui">書類</b> にドラッグして移動します。</li>
+      </ol>
+      <div class="note"><strong>大事：</strong>このフォルダは、ツールを使っている間ずっと必要です。<strong>移動したり削除したりしないでください。</strong>動かすとツールが使えなくなります。</div>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="num">3</span><h3>Chromeの「拡張機能」画面を開く</h3></div>
+      <ol>
+        <li>Google Chromeを開きます。</li>
+        <li>下の文字を<b class="ui">コピー</b>ボタンでコピーし、Chromeの一番上のアドレス欄（いつもURLが表示されている所）に貼り付けて、<b class="ui">Enter</b>キーを押します。</li>
+      </ol>
+      <div class="copyrow">
+        <code id="ext-url">chrome://extensions</code>
+        <button type="button" class="copy" id="copy-url">コピー</button>
+      </div>
+      <p class="mock-cap">うまくいかない場合：Chrome右上の <b class="ui">⋮</b> → <b class="ui">拡張機能</b> → <b class="ui">拡張機能を管理</b> でも同じ画面が開きます。</p>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="num">4</span><h3>「デベロッパー モード」をオンにする</h3></div>
+      <p>画面の<strong>右上</strong>にある <b class="ui">デベロッパー モード</b> のスイッチを押して、オン（青色）にします。</p>
+      <div class="mock" aria-hidden="true">
+        <div class="mock-bar"><span class="mock-title">拡張機能</span><span class="toggle hl">デベロッパー モード <i></i></span></div>
+        <div class="mock-body" style="color:var(--muted)">（すでに入っている拡張機能の一覧）</div>
+      </div>
+      <p class="mock-cap">画面の見本です。実際の画面とは見た目が少し違います。</p>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="num">5</span><h3>ツールを読み込む</h3></div>
+      <ol>
+        <li>オンにすると、画面の<strong>左上</strong>にボタンが並びます。<b class="ui">パッケージ化されていない拡張機能を読み込む</b> を押します。</li>
+        <li>フォルダを選ぶ画面が開きます。<b class="ui" data-os-only="win">ドキュメント</b><b class="ui" data-os-only="mac" hidden>書類</b> の中の <b class="ui">pdf-editor</b> フォルダを<strong>1回クリック</strong>して選びます（開かなくて大丈夫です）。</li>
+        <li><b class="ui" data-os-only="win">フォルダーの選択</b><b class="ui" data-os-only="mac" hidden>選択</b> ボタンを押します。</li>
+        <li>一覧に <b class="ui">PDF Page Editor</b> が出てくれば成功です。</li>
+      </ol>
+      <div class="mock" aria-hidden="true">
+        <div class="mock-bar"><span class="mock-btn hl">パッケージ化されていない拡張機能を読み込む</span><span class="mock-btn">拡張機能をパック</span><span class="mock-btn">更新</span></div>
+        <div class="mock-body">
+          <div class="folder">
+            <div class="dim"><span data-os-only="win">ドキュメント</span><span data-os-only="mac" hidden>書類</span></div>
+            <div class="pick">　📁 pdf-editor　<span class="tag">← これを選ぶ</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-head"><span class="num">6</span><h3>ボタンをツールバーに出しておく</h3></div>
+      <ol>
+        <li>Chromeの右上にある <span class="icon-btn" aria-label="パズルのピース">🧩</span>（パズルのピースの形）を押します。</li>
+        <li>一覧の <b class="ui">PDF Page Editor</b> の横にある <span class="icon-btn" aria-label="ピン">📌</span>（ピン）を押します。</li>
+        <li>右上に青いアイコンが出れば、導入は完了です。</li>
+      </ol>
+      <p>最後に、<b class="ui">デベロッパー モード</b> はオンのままでかまいません。</p>
+    </div>
+  </section>
+
+  <section class="part">
+    <h2>使い方</h2>
+    <p>右上の青いアイコンを押すと、編集画面が新しいタブで開きます。</p>
+    <div class="use">
+      <div><b>① PDFを開く</b><p>PDFファイルを画面にドラッグします。2つ以上入れると、1つにつながります。</p></div>
+      <div><b>② 編集する</b><p>ページをドラッグして順番を入れ替えます。ページにマウスを乗せると、回転と削除（✕）のボタンが出ます。</p></div>
+      <div><b>③ 保存する</b><p>右上の「PDFを保存」を押すと、「ダウンロード」フォルダに保存されます。元のファイルはそのまま残ります。</p></div>
+    </div>
+    <p>ページが小さくて見づらいときは、上の <b class="ui">－</b>／<b class="ui">＋</b> ボタンで表示の大きさを変えられます。間違えたときは、上の <b class="ui">↶</b> ボタンで1つ前に戻せます。PDFはインターネットに送られず、このパソコンの中だけで処理されます。</p>
+  </section>
+
+  <section class="part">
+    <h2>困ったとき</h2>
+    <div class="faq">
+      <details>
+        <summary>「マニフェスト ファイルが見つからないか読み取れません」と出た</summary>
+        <p>選んだフォルダが1つずれています。手順5で、<b class="ui">pdf-editor</b> という名前のフォルダを選び直してください。</p>
+        <ul data-os-only="win"><li>Windowsでは、展開してできた <b class="ui">pdf-editor</b> フォルダの<strong>中にある</strong>、もう1つの <b class="ui">pdf-editor</b> を選びます。手順2で <b class="ui">ドキュメント</b> に移したものを選んでください。</li></ul>
+      </details>
+      <details>
+        <summary>「パッケージ化されていない拡張機能を読み込む」ボタンが見つからない</summary>
+        <p>手順4の <b class="ui">デベロッパー モード</b> がオフになっています。右上のスイッチを押してオン（青色）にしてください。</p>
+      </details>
+      <details>
+        <summary>ある日、急に使えなくなった（アイコンが消えた、エラーが出る）</summary>
+        <p><b class="ui">pdf-editor</b> フォルダを移動・削除していないか確認してください。消してしまった場合は、手順1からやり直してください。</p>
+      </details>
+      <details>
+        <summary>「デベロッパー モードの拡張機能を無効にする」という表示が出た</summary>
+        <p>右上の ✕ で閉じてください。<b class="ui">無効にする</b> を押すとツールが止まります。押してしまった場合は、手順3の画面で <b class="ui">PDF Page Editor</b> のスイッチをオンに戻してください。</p>
+      </details>
+      <details>
+        <summary>開けないPDFがある</summary>
+        <p>パスワードがかかっているPDFは開けません。パスワードを外したPDFでお試しください。</p>
+      </details>
+      <details>
+        <summary>新しい版が出たときは？</summary>
+        <ul>
+          <li>手順1の <b class="ui">ダウンロード</b> ボタンから新しいZIPをダウンロードし、手順2と同じように展開します。</li>
+          <li><b class="ui">ドキュメント</b>（Macは <b class="ui">書類</b>）の中の古い <b class="ui">pdf-editor</b> フォルダを、新しいものに入れ替えます。</li>
+          <li>手順3の画面で、<b class="ui">PDF Page Editor</b> の欄にある <b class="ui">↻</b>（再読み込み）ボタンを押します。</li>
+        </ul>
+      </details>
+    </div>
+  </section>
+
+  <footer>
+    わからないときは、このツールを案内した社内の担当者までお気軽にどうぞ。画面の写真（スクリーンショット）を送ってもらえると早く解決できます。<br>
+    PDF Page Editor ／ 2026年10月9日版 ／ <a href="./">トップへ戻る</a> ／ <a href="requirements.html">要件定義書</a>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var buttons = document.querySelectorAll('.os button');
+  function setOS(os) {
+    buttons.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.os === os)); });
+    document.querySelectorAll('[data-os-only]').forEach(function (el) { el.hidden = el.dataset.osOnly !== os; });
+    try { localStorage.setItem('os', os); } catch (e) {}
+  }
+  buttons.forEach(function (b) { b.addEventListener('click', function () { setOS(b.dataset.os); }); });
+  var saved = null;
+  try { saved = localStorage.getItem('os'); } catch (e) {}
+  var guess = /Mac/i.test(navigator.platform || navigator.userAgent) ? 'mac' : 'win';
+  setOS(saved || guess);
+
+  var copyBtn = document.getElementById('copy-url');
+  copyBtn.addEventListener('click', function () {
+    var text = document.getElementById('ext-url').textContent;
+    var done = function () { copyBtn.textContent = 'コピーしました'; setTimeout(function () { copyBtn.textContent = 'コピー'; }, 2000); };
+    var fallback = function () {
+      var r = document.createRange(); r.selectNodeContents(document.getElementById('ext-url'));
+      var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      copyBtn.textContent = '選択しました。Ctrl+C（Macは⌘+C）でコピー';
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+    else fallback();
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="icon.png">
+<title>PDF Page Editor 要件定義書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: 社内の仕様書。左に目次(広い画面のみ固定)、右に本文。表はそれぞれ横スクロール可能な枠に入れる */
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --fg: #1c2230;
+  --muted: #5d6677;
+  --line: #dde1e8;
+  --accent: #2f5fd0;
+  --accent-weak: #e7eefc;
+  --ok: #1d7a4c;
+  --ok-weak: #e3f3ea;
+  --todo: #9a5b00;
+  --todo-weak: #fbefdc;
+  --risk: #b42318;
+  --risk-weak: #fde8e6;
+  --font-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic UI", "Meiryo", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14171d; --surface: #1c2029; --fg: #e5e8ee; --muted: #9aa3b3; --line: #2f3542;
+    --accent: #7ea2ff; --accent-weak: #1f2b47; --ok: #5fcf95; --ok-weak: #173226; --todo: #f0b35a; --todo-weak: #3a2b14;
+    --risk: #ff8a7a; --risk-weak: #3d1d1a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14171d; --surface: #1c2029; --fg: #e5e8ee; --muted: #9aa3b3; --line: #2f3542;
+  --accent: #7ea2ff; --accent-weak: #1f2b47; --ok: #5fcf95; --ok-weak: #173226; --todo: #f0b35a; --todo-weak: #3a2b14;
+  --risk: #ff8a7a; --risk-weak: #3d1d1a;
+  color-scheme: dark;
+}
+
+body { background: var(--bg); color: var(--fg); font: 15px/1.8 var(--font-body); padding-inline: 16px; }
+.layout { max-width: 1120px; margin: 0 auto; padding-block: 40px 80px; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-block: 24px 56px; } }
+
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); font-size: 13px; }
+nav.toc .toc-title { font: 500 11px/1 var(--font-mono); letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+nav.toc a { display: block; color: var(--muted); text-decoration: none; padding: 3px 8px; border-radius: 4px; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--accent); background: var(--accent-weak); outline: none; }
+@media (max-width: 900px) {
+  nav.toc { position: static; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  nav.toc ol { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+}
+
+main { display: grid; gap: 48px; min-width: 0; }
+.doc-head { display: grid; gap: 14px; }
+.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; color: var(--accent); }
+h1 { font-size: 30px; line-height: 1.35; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--muted); max-width: 66ch; }
+
+section { display: grid; gap: 14px; scroll-margin-top: 16px; }
+h2 { font-size: 21px; margin: 0; padding-bottom: 8px; border-bottom: 2px solid var(--fg); display: flex; gap: 12px; align-items: baseline; }
+h2 .no { font: 500 15px var(--font-mono); color: var(--accent); }
+h3 { font-size: 16px; margin: 10px 0 0; }
+p { margin: 0; max-width: 72ch; }
+ul, ol { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
+li::marker { color: var(--accent); }
+code { font: 13px var(--font-mono); background: var(--accent-weak); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+strong { font-weight: 700; }
+
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 14px; line-height: 1.6; }
+th, td { text-align: left; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--line); }
+tr:last-child td { border-bottom: 0; }
+thead th { font-size: 12px; font-weight: 700; color: var(--muted); background: var(--bg); white-space: nowrap; }
+td.id, th.id { font: 500 12px/1.9 var(--font-mono); white-space: nowrap; color: var(--accent); }
+td.nw { white-space: nowrap; }
+.meta-tbl th { width: 9em; color: var(--muted); font-weight: 500; font-size: 13px; background: var(--bg); }
+
+.chip { display: inline-block; font: 500 11px/1 var(--font-mono); padding: 4px 7px; border-radius: 4px; white-space: nowrap; letter-spacing: .03em; }
+.chip.ok { color: var(--ok); background: var(--ok-weak); }
+.chip.todo { color: var(--todo); background: var(--todo-weak); }
+.chip.risk { color: var(--risk); background: var(--risk-weak); }
+.chip.plan { color: var(--accent); background: var(--accent-weak); }
+
+.callout { border-left: 3px solid var(--accent); background: var(--surface); padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 14px; }
+.callout.warn { border-color: var(--todo); }
+
+.flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; font-size: 13px; }
+.flow .box { flex: 1 1 150px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.flow .box b { display: block; font-size: 13px; }
+.flow .box span { color: var(--muted); }
+.flow .arrow { align-self: center; color: var(--muted); font-family: var(--font-mono); }
+@media (max-width: 640px) { .flow .arrow { transform: rotate(90deg); width: 100%; text-align: center; } }
+
+.decision { display: grid; gap: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; }
+.decision b { font-size: 14px; }
+.decision p { font-size: 14px; color: var(--muted); }
+.decisions { display: grid; gap: 10px; }
+
+footer a { color: var(--accent); }
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 16px; }
+@media (max-width: 480px) { h1 { font-size: 24px; } h2 { font-size: 19px; } }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <nav class="toc" aria-label="目次">
+    <div class="toc-title">目次</div>
+    <ol>
+      <li><a href="#info">0. 文書情報</a></li>
+      <li><a href="#overview">1. 概要</a></li>
+      <li><a href="#terms">2. 用語</a></li>
+      <li><a href="#users">3. 利用者と利用環境</a></li>
+      <li><a href="#functional">4. 機能要件</a></li>
+      <li><a href="#nonfunctional">5. 非機能要件</a></li>
+      <li><a href="#architecture">6. システム構成</a></li>
+      <li><a href="#decisions">7. 設計上の判断</a></li>
+      <li><a href="#limits">8. 制約・既知の制限</a></li>
+      <li><a href="#test">9. テスト</a></li>
+      <li><a href="#ops">10. 配布・運用</a></li>
+      <li><a href="#risks">11. リスクと対策</a></li>
+      <li><a href="#roadmap">12. ロードマップ</a></li>
+      <li><a href="#open">13. 未決事項</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <div class="doc-head">
+      <div class="eyebrow">要件定義書 / 開発資料</div>
+      <h1>無料PDF編集ツール「PDF Page Editor」要件定義書</h1>
+      <p class="lead">PDFのページの並べ替え・削除・回転・結合・表示倍率の変更を、社外にファイルを出さずに無料で行うChrome拡張機能について、目的・要件・構成・運用をまとめます。</p>
+    </div>
+
+    <section id="info">
+      <h2><span class="no">0</span>文書情報</h2>
+      <div class="tbl"><table class="meta-tbl">
+        <tr><th>文書名</th><td>PDF Page Editor 要件定義書</td></tr>
+        <tr><th>文書の版</th><td>1.1（2026年10月9日）</td></tr>
+        <tr><th>対象バージョン</th><td>PDF Page Editor v1.1.0</td></tr>
+        <tr><th>ソースコード</th><td><a href="https://github.com/Gaccho-code/pdf-editor">github.com/Gaccho-code/pdf-editor</a>（公開・MIT License）</td></tr>
+        <tr><th>状態</th><td><span class="chip todo">ドラフト</span> 社内レビュー前</td></tr>
+      </table></div>
+      <h3>改訂履歴</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>版</th><th>日付</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td class="nw">1.0</td><td class="nw">2026-10-09</td><td>初版。v1.1.0（表示倍率の変更機能を追加）の時点の内容で作成</td></tr>
+          <tr><td class="nw">1.1</td><td class="nw">2026-10-09</td><td>GitHubでの公開に合わせ、配布・運用、リスク、ロードマップ、未決事項を更新</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="overview">
+      <h2><span class="no">1</span>概要</h2>
+      <h3>1.1 背景</h3>
+      <ul>
+        <li>社内で「PDFのページを並べ替えたい・不要なページを消したい・複数のPDFを1つにまとめたい」という作業が日常的に発生している。</li>
+        <li>これらの操作には有料ソフト（Adobe Acrobat Pro など）が必要で、全員分のライセンスを用意するとコストがかかる。</li>
+        <li>無料のオンラインPDFサービスは手軽だが、<strong>社外秘の資料を外部のサーバーにアップロードすることになり</strong>、情報漏えいのおそれがある。</li>
+      </ul>
+      <h3>1.2 目的</h3>
+      <ul>
+        <li>PDFのページ単位の編集を、<strong>追加費用なし</strong>で社員全員が行えるようにする。</li>
+        <li>PDFを<strong>外部に送信せず</strong>、各自のパソコンの中だけで処理できるようにする。</li>
+        <li>説明書を読まなくても使えるほど、操作をシンプルにする。</li>
+      </ul>
+      <h3>1.3 対象範囲</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>区分</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td class="nw"><span class="chip ok">対象</span></td><td>ページ単位の編集（並べ替え・削除・回転・結合）、編集結果のPDF保存、サムネイルの表示倍率の変更</td></tr>
+          <tr><td class="nw"><span class="chip risk">対象外</span></td><td>ページ内の文字や画像の編集、注釈・署名の追加、OCR、PDF以外の形式への変換、パスワードの設定・解除、クラウド保存や共有</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="terms">
+      <h2><span class="no">2</span>用語</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>用語</th><th>意味</th></tr></thead>
+        <tbody>
+          <tr><td class="nw">拡張機能</td><td>Google Chromeに機能を追加する小さなプログラム。本ツールはこの形で提供する。</td></tr>
+          <tr><td class="nw">編集画面</td><td>ツールバーのアイコンを押すと新しいタブで開く、本ツールの操作画面（<code>editor.html</code>）。</td></tr>
+          <tr><td class="nw">元ファイル</td><td>利用者が読み込んだPDF。本ツールは元ファイルを書き換えない。</td></tr>
+          <tr><td class="nw">ページ並び</td><td>編集画面上の現在のページの順番と向き。保存時にこの内容でPDFを作る。</td></tr>
+          <tr><td class="nw">デベロッパー モード</td><td>ストアを通さずに拡張機能をフォルダから読み込むための、Chromeの設定。</td></tr>
+          <tr><td class="nw">Manifest V3</td><td>現行のChrome拡張機能の仕様。<code>manifest.json</code> に記述する。</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="users">
+      <h2><span class="no">3</span>利用者と利用環境</h2>
+      <h3>3.1 想定利用者</h3>
+      <ul>
+        <li>社内の全社員。パソコン操作に慣れていない人も含む。</li>
+        <li>導入作業も利用者本人が行う前提とし、<a href="install.html">導入手順書</a>を別に用意している。</li>
+      </ul>
+      <h3>3.2 想定利用シーン</h3>
+      <ul>
+        <li>スキャンした書類のページ順が逆になっているので並べ替える。</li>
+        <li>見積書・請求書・添付資料を1つのPDFにまとめて送付する。</li>
+        <li>横向きに取り込まれたページを正しい向きに直す。</li>
+        <li>提出用に、社内向けのページ（メモ・検討資料）を削除する。</li>
+      </ul>
+      <h3>3.3 動作環境</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>項目</th><th>要件</th></tr></thead>
+        <tbody>
+          <tr><td class="nw">OS</td><td>Windows 10 / 11、macOS（Chromeが動作するもの）</td></tr>
+          <tr><td class="nw">ブラウザ</td><td>Google Chrome の最新安定版（Manifest V3 と ES Modules に対応していること）</td></tr>
+          <tr><td class="nw">ネットワーク</td><td>不要（導入時のZIP取得を除く）</td></tr>
+          <tr><td class="nw">権限</td><td>拡張機能として特別な権限は要求しない（<code>manifest.json</code> に <code>permissions</code> の指定なし）</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="functional">
+      <h2><span class="no">4</span>機能要件</h2>
+      <p>状態は v1.1.0 時点。「実装済」は編集画面単体での動作確認まで完了したものを指す（詳細は「9. テスト」）。</p>
+      <div class="tbl"><table>
+        <thead><tr><th class="id">ID</th><th>機能</th><th>要件</th><th>状態</th></tr></thead>
+        <tbody>
+          <tr><td class="id">FR-01</td><td class="nw">起動</td><td>ツールバーのアイコンを押すと、編集画面を新しいタブで開く。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-02</td><td class="nw">PDF読み込み</td><td>ファイル選択ダイアログ、または画面へのドラッグ＆ドロップで読み込む。複数ファイルを同時に指定できる。PDF以外は受け付けない。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-03</td><td class="nw">サムネイル一覧</td><td>全ページを縮小画像で一覧表示する。各ページに現在のページ番号と、元ファイル名・元のページ番号を表示する。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-04</td><td class="nw">ページ選択</td><td>クリックで単一選択、⌘/Ctrl+クリックで追加・解除、Shift+クリックで範囲選択、⌘/Ctrl+A で全選択、Esc で選択解除。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-05</td><td class="nw">並べ替え</td><td>ページをドラッグ＆ドロップで移動する。選択中のページをドラッグした場合は、選択中の全ページを元の順序のまままとめて移動する。移動先の挿入位置を線で示す。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-06</td><td class="nw">削除</td><td>ページごとの削除ボタン、または選択ページを Delete / Backspace キーかツールバーのボタンで削除する。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-07</td><td class="nw">回転</td><td>ページごと、または選択ページを90°単位で左右に回転する。元ファイルにすでに設定された回転に加算する。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-08</td><td class="nw">結合</td><td>読み込み済みの状態でさらにPDFを追加すると、ページ並びの末尾に追加する。異なるファイルのページを自由に並べ替えられる。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-09</td><td class="nw">表示倍率</td><td>サムネイルの大きさを 60 / 80 / 100 / 150 / 200 / 300% の6段階で変える。ツールバーの －／＋ ボタン、スライダー、＋／－ キーで操作する。選んだ倍率は次回起動時も引き継ぐ。拡大して画質が足りなくなった場合は、高解像度で描き直す。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-10</td><td class="nw">元に戻す／やり直し</td><td>並べ替え・削除・回転・追加を ⌘/Ctrl+Z で元に戻し、⌘/Ctrl+Shift+Z（または ⌘/Ctrl+Y）でやり直す。履歴は編集画面を閉じるまで保持する。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-11</td><td class="nw">保存</td><td>現在のページ並びでPDFを作り、ダウンロードする。ファイル名は「最初に読み込んだファイル名_edited.pdf」、複数ファイルを結合した場合は「_merged.pdf」。元ファイルは変更しない。⌘/Ctrl+S でも保存できる。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-12</td><td class="nw">クリア</td><td>読み込んだPDFと編集内容をすべて破棄して初期状態に戻す。未保存の編集がある場合は確認する。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-13</td><td class="nw">離脱時の警告</td><td>未保存の編集がある状態でタブを閉じようとすると、ブラウザの確認を表示する。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-14</td><td class="nw">エラー表示</td><td>パスワード保護・暗号化されたPDF、壊れたPDFは読み込まず、ファイル名と理由を表示する。</td><td><span class="chip ok">実装済</span></td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>4.1 今後の機能候補</h3>
+      <div class="tbl"><table>
+        <thead><tr><th class="id">ID</th><th>機能</th><th>概要</th><th>優先度</th></tr></thead>
+        <tbody>
+          <tr><td class="id">FR-F1</td><td class="nw">分割・抽出</td><td>ページ範囲を指定し、その部分だけを別のPDFとして保存する。</td><td><span class="chip plan">高</span></td></tr>
+          <tr><td class="id">FR-F2</td><td class="nw">ページ拡大表示</td><td>ページをダブルクリックすると1ページを大きく表示し、内容を確認できる。</td><td><span class="chip plan">高</span></td></tr>
+          <tr><td class="id">FR-F3</td><td class="nw">しおりの引き継ぎ</td><td>元ファイルのしおり（目次）を保存後のPDFに残す。</td><td><span class="chip plan">中</span></td></tr>
+          <tr><td class="id">FR-F4</td><td class="nw">パスワード付きPDF</td><td>パスワードを入力して開き、編集できるようにする。</td><td><span class="chip plan">中</span></td></tr>
+          <tr><td class="id">FR-F5</td><td class="nw">白紙ページの挿入</td><td>任意の位置に白紙ページを追加する。</td><td><span class="chip plan">低</span></td></tr>
+        </tbody>
+      </table></div>
+      <p>優先度は仮置き。社内試用のフィードバックをもとに見直す。</p>
+    </section>
+
+    <section id="nonfunctional">
+      <h2><span class="no">5</span>非機能要件</h2>
+      <div class="tbl"><table>
+        <thead><tr><th class="id">ID</th><th>区分</th><th>要件</th><th>状態</th></tr></thead>
+        <tbody>
+          <tr><td class="id">NFR-01</td><td class="nw">情報セキュリティ</td><td>PDFの内容を外部に送信しない。外部サーバーへの通信を行わず、ライブラリもCDNから読み込まずに同梱する。</td><td><span class="chip ok">満たす</span></td></tr>
+          <tr><td class="id">NFR-02</td><td class="nw">最小権限</td><td>拡張機能として、タブの閲覧・ファイルアクセスなどの権限を要求しない。</td><td><span class="chip ok">満たす</span></td></tr>
+          <tr><td class="id">NFR-03</td><td class="nw">オフライン動作</td><td>インターネットに接続していなくても全機能が使える。</td><td><span class="chip ok">満たす</span></td></tr>
+          <tr><td class="id">NFR-04</td><td class="nw">コスト</td><td>利用・配布・運用に費用がかからない。使用するライブラリは商用利用可能なオープンソースに限る。</td><td><span class="chip ok">満たす</span></td></tr>
+          <tr><td class="id">NFR-05</td><td class="nw">非破壊</td><td>元ファイルを書き換えない。保存は常に新しいファイルとしてダウンロードする。</td><td><span class="chip ok">満たす</span></td></tr>
+          <tr><td class="id">NFR-06</td><td class="nw">性能</td><td>目標：100ページ程度のPDFで、読み込み開始から操作可能になるまで数秒以内、全サムネイルの表示が30秒以内。</td><td><span class="chip todo">未計測</span></td></tr>
+          <tr><td class="id">NFR-07</td><td class="nw">使いやすさ</td><td>画面の文言はすべて日本語。主要な操作はマウスだけで完結し、キーボードショートカットは補助とする。</td><td><span class="chip ok">満たす</span></td></tr>
+          <tr><td class="id">NFR-08</td><td class="nw">表示品質</td><td>日本語などのCIDフォントを含むPDFを正しく表示する（文字の対応表を同梱）。高解像度ディスプレイでもサムネイルが粗くならない。</td><td><span class="chip todo">日本語は未確認</span></td></tr>
+          <tr><td class="id">NFR-09</td><td class="nw">保守性</td><td>ビルド工程を持たず、ファイルを編集してChromeで再読み込みすれば反映される。ライブラリはバージョンを固定して同梱する。</td><td><span class="chip ok">満たす</span></td></tr>
+          <tr><td class="id">NFR-10</td><td class="nw">配色</td><td>OSのライト／ダーク設定に合わせて表示を切り替える。</td><td><span class="chip ok">満たす</span></td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="architecture">
+      <h2><span class="no">6</span>システム構成</h2>
+      <h3>6.1 全体像</h3>
+      <p>サーバーを持たず、すべての処理を利用者のChromeの中で行う。表示用と書き出し用に、役割の異なる2つのライブラリを使う。</p>
+      <div class="flow" role="img" aria-label="処理の流れ：PDFファイルを読み込み、表示用と編集用に解析し、ページ並びを編集して、新しいPDFとして保存する">
+        <div class="box"><b>PDFファイル</b><span>ドラッグ＆ドロップ／ファイル選択</span></div>
+        <div class="arrow">→</div>
+        <div class="box"><b>解析</b><span>pdf.js（表示用）と pdf-lib（書き出し用）で別々に読み込む</span></div>
+        <div class="arrow">→</div>
+        <div class="box"><b>ページ並びの編集</b><span>順番・向き・削除をデータとして保持（元のPDFは触らない）</span></div>
+        <div class="arrow">→</div>
+        <div class="box"><b>保存</b><span>pdf-lib で必要なページだけを新しいPDFにコピーしてダウンロード</span></div>
+      </div>
+
+      <h3>6.2 使用ライブラリ</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>ライブラリ</th><th>版</th><th>ライセンス</th><th>用途</th></tr></thead>
+        <tbody>
+          <tr><td class="nw">pdf.js（Mozilla）</td><td class="nw">4.10.38</td><td class="nw">Apache-2.0</td><td>PDFのページを画像として描画し、サムネイルを作る。日本語表示用の文字対応表（cmaps）と標準フォントも同梱。</td></tr>
+          <tr><td class="nw">pdf-lib</td><td class="nw">1.17.1</td><td class="nw">MIT</td><td>元のPDFからページをコピーし、回転を設定して新しいPDFを作る。</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>6.3 ファイル構成</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>パス</th><th>役割</th></tr></thead>
+        <tbody>
+          <tr><td class="nw"><code>manifest.json</code></td><td>拡張機能の定義（Manifest V3、名前・版・アイコン）</td></tr>
+          <tr><td class="nw"><code>background.js</code></td><td>アイコンが押されたら編集画面のタブを開く。拡張機能のAPIを使うのはこのファイルのみ。</td></tr>
+          <tr><td class="nw"><code>editor.html / .css / .js</code></td><td>編集画面。読み込み・表示・編集・保存のすべての処理</td></tr>
+          <tr><td class="nw"><code>lib/</code></td><td>同梱ライブラリとそのライセンス文書</td></tr>
+          <tr><td class="nw"><code>icons/</code></td><td>拡張機能のアイコン（16 / 48 / 128px）</td></tr>
+          <tr><td class="nw"><code>scripts/package.sh</code></td><td>配布用のZIP（<code>dist/pdf-editor-v版.zip</code>）を作る</td></tr>
+          <tr><td class="nw"><code>docs/</code></td><td>GitHub Pages で公開する資料（トップページ・導入手順書・本書）</td></tr>
+          <tr><td class="nw"><code>.github/workflows/release.yml</code></td><td>タグをプッシュすると配布用ZIPを作り、Releases に登録する</td></tr>
+        </tbody>
+      </table></div>
+
+      <h3>6.4 データの持ち方（editor.js）</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>データ</th><th>内容</th></tr></thead>
+        <tbody>
+          <tr><td class="nw"><code>sources</code></td><td>読み込んだPDFの一覧。ファイル名と、pdf.js用・pdf-lib用の解析結果を持つ。</td></tr>
+          <tr><td class="nw"><code>pages</code></td><td>現在のページ並び。各要素は「どのファイルの何ページ目か」と「追加の回転角度」だけを持つ。</td></tr>
+          <tr><td class="nw"><code>selected</code></td><td>選択中のページ。</td></tr>
+          <tr><td class="nw"><code>undoStack / redoStack</code></td><td>過去の <code>pages</code> の一覧。編集のたびに新しい配列を作り、古い配列を履歴に積む。</td></tr>
+          <tr><td class="nw"><code>thumbs / bestThumbs</code></td><td>描画済みサムネイルの保管場所（ページと解像度ごと）。同じページは二度描画しない。</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="decisions">
+      <h2><span class="no">7</span>設計上の判断</h2>
+      <div class="decisions">
+        <div class="decision"><b>Webサービスではなく、Chrome拡張機能にした</b><p>サーバーが不要で費用も情報漏えいの経路もなく、アイコン1つで起動できるため。中身は通常のWebページなので、必要になればWebアプリにも転用できる。</p></div>
+        <div class="decision"><b>表示と書き出しで別のライブラリを使う</b><p>pdf.js は描画に強いがPDFを書き出せず、pdf-lib は書き出せるが描画できない。それぞれの得意分野に分けた。</p></div>
+        <div class="decision"><b>編集は「ページ並び」というデータの上で行い、保存時にだけPDFを作る</b><p>操作が軽く、元に戻す・やり直しを簡単に実現できる。元のPDFは最後まで変更しない。</p></div>
+        <div class="decision"><b>暗号化PDFは読み込み時点で断る</b><p>pdf-lib は暗号化されたPDFを正しく書き出せないため、編集した後で保存に失敗するより、最初に分かるほうが利用者の手間が少ない。</p></div>
+        <div class="decision"><b>サムネイルは1枚ずつ順番に描画し、解像度は3段階に限る</b><p>大量のページを同時に描画するとメモリが不足するため。倍率を少し変えただけでは描き直さず、画質が足りなくなったときだけ高解像度で描く。</p></div>
+        <div class="decision"><b>ライブラリはCDNを使わず同梱する</b><p>オフラインで動作させ、外部への通信をゼロにするため。拡張機能のセキュリティ方針（CSP）上もこの方が確実。</p></div>
+      </div>
+    </section>
+
+    <section id="limits">
+      <h2><span class="no">8</span>制約・既知の制限</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>項目</th><th>内容</th><th>回避策</th></tr></thead>
+        <tbody>
+          <tr><td class="nw">暗号化PDF</td><td>パスワード保護・暗号化されたPDFは読み込めない。</td><td>パスワードを外したPDFを使う。将来対応候補（FR-F4）。</td></tr>
+          <tr><td class="nw">しおり</td><td>元ファイルのしおり（目次）は保存後のPDFに残らない。</td><td>将来対応候補（FR-F3）。</td></tr>
+          <tr><td class="nw">入力フォーム</td><td>入力欄付きのPDFは、保存後に入力欄が正しく動かない場合がある。</td><td>入力を済ませてから編集する。</td></tr>
+          <tr><td class="nw">大きなファイル</td><td>PDFの内容をメモリに保持するため、数百MB級のPDFでは動作が重くなる可能性がある。</td><td>分割してから編集する。上限は今後計測する。</td></tr>
+          <tr><td class="nw">編集履歴</td><td>元に戻す履歴は、タブを閉じると消える。</td><td>こまめに保存する。</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="test">
+      <h2><span class="no">9</span>テスト</h2>
+      <h3>9.1 実施済み</h3>
+      <p>テスト用のPDF（5ページと3ページの2ファイル）を使い、ローカルのWebサーバーで開いた編集画面（Chrome系ブラウザ）で確認した。</p>
+      <div class="tbl"><table>
+        <thead><tr><th>確認内容</th><th>結果</th></tr></thead>
+        <tbody>
+          <tr><td>2ファイルの読み込みと、8ページ分のサムネイル表示</td><td><span class="chip ok">合格</span></td></tr>
+          <tr><td>回転・削除・ドラッグでの並べ替え後のページ順</td><td><span class="chip ok">合格</span></td></tr>
+          <tr><td>元に戻す・やり直し</td><td><span class="chip ok">合格</span></td></tr>
+          <tr><td>保存したPDFのページ数・順番・回転角度（7ページ、指定のページのみ90°）</td><td><span class="chip ok">合格</span></td></tr>
+          <tr><td>表示倍率6段階のページ幅（102〜510px）、倍率の引き継ぎ、拡大時の高解像度での描き直し</td><td><span class="chip ok">合格</span></td></tr>
+          <tr><td>縦長ページの縦横比、回転後の表示</td><td><span class="chip ok">合格</span></td></tr>
+        </tbody>
+      </table></div>
+      <h3>9.2 未実施（社内展開前に実施する）</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>確認内容</th><th>状態</th></tr></thead>
+        <tbody>
+          <tr><td>Chromeに拡張機能として読み込み、アイコンから起動できること</td><td><span class="chip todo">未実施</span></td></tr>
+          <tr><td>Windows 環境での導入手順と動作</td><td><span class="chip todo">未実施</span></td></tr>
+          <tr><td>日本語を含む実際の業務PDF（スキャン書類、Word・Excelから作ったPDF）の表示と保存</td><td><span class="chip todo">未実施</span></td></tr>
+          <tr><td>100ページ以上・数十MB以上のPDFでの性能（NFR-06）</td><td><span class="chip todo">未実施</span></td></tr>
+          <tr><td>暗号化PDF・壊れたPDFを読み込んだときのエラー表示</td><td><span class="chip todo">未実施</span></td></tr>
+          <tr><td>ITに不慣れな社員が手順書だけで導入できること</td><td><span class="chip todo">未実施</span></td></tr>
+        </tbody>
+      </table></div>
+      <h3>9.3 受け入れ基準</h3>
+      <ul>
+        <li>9.2 の項目がすべて合格していること。</li>
+        <li>試用者が、手順書のみで導入と「並べ替え→保存」を完了できること。</li>
+        <li>保存したPDFが、Adobe Acrobat Reader と Chrome の両方で正しく開けること。</li>
+      </ul>
+    </section>
+
+    <section id="ops">
+      <h2><span class="no">10</span>配布・運用</h2>
+      <h3>10.1 配布方法（現行）</h3>
+      <ol>
+        <li>ソースコード・資料・配布用ZIPはすべて GitHub で公開する。</li>
+        <li>資料（本書・<a href="install.html">導入手順書</a>）は GitHub Pages で公開する。リポジトリの <code>docs/</code> フォルダの内容がそのままサイトになる。</li>
+        <li>配布用ZIPは <a href="https://github.com/Gaccho-code/pdf-editor/releases">GitHub Releases</a> に置く。導入手順書のダウンロードボタンは常に最新版を指す。</li>
+        <li>社内には、導入手順書のURLを案内する。利用者は手順書に沿ってZIPを展開し、Chromeの「デベロッパー モード」から読み込む。</li>
+      </ol>
+      <h3>10.2 バージョン管理と更新</h3>
+      <ul>
+        <li>版は <code>manifest.json</code> の <code>version</code> で管理する。機能追加は 1.<strong>x</strong>.0、不具合修正は 1.x.<strong>y</strong> と上げる。</li>
+        <li>リリースするときは、<code>manifest.json</code> の版を上げてコミットし、<code>v1.2.0</code> のような版名のタグを付けてプッシュする。GitHub Actions が配布用ZIPを作り、Releases に登録する。</li>
+        <li>利用者は、新しいZIPでフォルダを入れ替えて拡張機能を再読み込みする（手順書に記載）。</li>
+        <li>同梱ライブラリは、脆弱性情報を確認したうえで年1回程度見直す。</li>
+      </ul>
+      <h3>10.3 将来の配布方法の候補</h3>
+      <div class="tbl"><table>
+        <thead><tr><th>方法</th><th>長所</th><th>短所</th></tr></thead>
+        <tbody>
+          <tr><td class="nw">GitHub Releases のZIP＋手動読み込み（現行）</td><td>費用なし、すぐ始められる</td><td>利用者の作業が多い。自動更新されない。</td></tr>
+          <tr><td class="nw">Chrome ウェブストア（限定公開）</td><td>「Chromeに追加」ボタンだけで導入でき、自動更新される</td><td>開発者登録料（初回のみ約5ドル）とストアの審査が必要</td></tr>
+          <tr><td class="nw">Google Workspace 管理コンソールから一括配布</td><td>利用者の作業がゼロ。全社に強制的に導入できる</td><td>Google Workspace の管理者権限が必要。ストアへの登録が前提になる</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="risks">
+      <h2><span class="no">11</span>リスクと対策</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>リスク</th><th>影響</th><th>対策</th></tr></thead>
+        <tbody>
+          <tr><td>会社のChrome管理ポリシーで、デベロッパー モードや拡張機能の追加が禁止されている</td><td><span class="chip risk">大</span> 導入できない</td><td>展開前に情報システム担当へ確認する。禁止の場合はストア経由・管理コンソール配布に切り替える。</td></tr>
+          <tr><td>利用者が拡張機能のフォルダを移動・削除する</td><td><span class="chip todo">中</span> ツールが使えなくなる</td><td>手順書で「ドキュメント」フォルダに置くよう指定し、注意を明記している。</td></tr>
+          <tr><td>Chromeの仕様変更で、フォルダからの読み込みが制限される</td><td><span class="chip todo">中</span> 新規導入ができなくなる</td><td>Chromeの更新情報を確認し、必要ならストア配布に移行する。</td></tr>
+          <tr><td>リポジトリと資料が社外からも見える</td><td><span class="chip todo">小</span> 社内事情が外部に知られる</td><td>秘密情報・個人名・連絡先・社内URLを載せない。公開前とリリースのたびに内容を確認する。</td></tr>
+          <tr><td>同梱ライブラリの脆弱性</td><td><span class="chip todo">中</span> 細工されたPDFを開いたときの安全性</td><td>ライブラリの更新情報を定期的に確認し、更新版を配布する。</td></tr>
+          <tr><td>特殊なPDFで表示や保存が崩れる</td><td><span class="chip todo">中</span> 誤ったファイルを送付するおそれ</td><td>元ファイルを変更しない設計とし、保存後のPDFを確認するよう案内する。</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="roadmap">
+      <h2><span class="no">12</span>ロードマップ</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>段階</th><th>内容</th><th>完了の目安</th></tr></thead>
+        <tbody>
+          <tr><td class="nw"><span class="chip ok">完了</span> 開発</td><td>v1.0.0（並べ替え・削除・回転・結合）、v1.1.0（表示倍率）</td><td>完了</td></tr>
+          <tr><td class="nw"><span class="chip ok">完了</span> 公開</td><td>GitHub でソースコード・資料・配布用ZIPを公開</td><td>完了</td></tr>
+          <tr><td class="nw"><span class="chip todo">次</span> 検証</td><td>9.2 の未実施テストと、情報システム担当への管理ポリシーの確認</td><td>全項目が合格</td></tr>
+          <tr><td class="nw"><span class="chip plan">予定</span> 試用</td><td>数名の社員に導入・利用してもらい、手順書と使い勝手の改善点を集める</td><td>試用者全員が導入完了</td></tr>
+          <tr><td class="nw"><span class="chip plan">予定</span> 全社展開</td><td>配布方法を決定し、全社に案内する</td><td>案内の完了</td></tr>
+          <tr><td class="nw"><span class="chip plan">予定</span> 機能追加</td><td>4.1 の候補から、要望の多い順に対応する</td><td>随時</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="open">
+      <h2><span class="no">13</span>未決事項</h2>
+      <div class="tbl"><table>
+        <thead><tr><th class="id">No.</th><th>内容</th><th>決める人</th></tr></thead>
+        <tbody>
+          <tr><td class="id">Q-01</td><td>全社展開時の配布方法。当面は GitHub Releases のZIPで配布する。ストア限定公開・管理コンソールへの移行は試用後に判断する</td><td>試用後に決定</td></tr>
+          <tr><td class="id">Q-02</td><td>社内のChrome管理ポリシーで、デベロッパー モードの拡張機能が使えるか</td><td>情報システム担当</td></tr>
+          <tr><td class="id">Q-03</td><td>問い合わせ窓口・不具合の受付方法（社外から見える場所には載せず、社内で案内する）</td><td>【未定】</td></tr>
+          <tr><td class="id">Q-04</td><td>試用の対象者と期間</td><td>【未定】</td></tr>
+          <tr><td class="id">Q-05</td><td>機能候補（4.1）の優先順位</td><td>試用後に決定</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <footer>PDF Page Editor 要件定義書 第1.1版 ／ 2026年10月9日 ／ 対象：v1.1.0 ／ <a href="./">トップへ戻る</a></footer>
+  </main>
+</div>
+</body>
+</html>
