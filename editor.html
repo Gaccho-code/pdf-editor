@@ -21,6 +21,13 @@
       <button id="btn-undo" title="元に戻す (⌘/Ctrl+Z)" disabled>↶</button>
       <button id="btn-redo" title="やり直す (⌘/Ctrl+Shift+Z)" disabled>↷</button>
       <span class="sep"></span>
+      <div class="zoom" title="表示倍率">
+        <button id="btn-zoom-out" aria-label="縮小">－</button>
+        <input type="range" id="zoom" min="0" max="5" step="1" value="2" aria-label="表示倍率">
+        <button id="btn-zoom-in" aria-label="拡大">＋</button>
+        <span id="zoom-label" class="zoom-label">100%</span>
+      </div>
+      <span class="sep"></span>
       <button id="btn-reset" title="すべて閉じて最初から">クリア</button>
       <button id="btn-save" class="primary" title="編集後のPDFをダウンロード (⌘/Ctrl+S)" disabled>PDFを保存</button>
     </div>

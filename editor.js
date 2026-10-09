@@ -14,7 +14,9 @@ const PDFJS_OPTIONS = {
 };
 const { PDFDocument, degrees, EncryptedPDFError } = window.PDFLib;
 
-const THUMB_SIZE = 320; // サムネイルの長辺(px)。Retinaでも粗くならない程度
+const ZOOM_LEVELS = [60, 80, 100, 150, 200, 300]; // 表示倍率(%)
+const BASE_CARD_WIDTH = 170; // 100%のときのページ1枚分の幅(px)
+const THUMB_SIZES = [320, 640, 1280]; // サムネイルの長辺(px)の段階
 
 // ---- 状態 ----
 // sources: 読み込んだPDF。{ name, viewDoc(pdf.js), editDoc(pdf-lib) }
@@ -28,7 +30,9 @@ let nextId = 1;
 let dirty = false;
 const undoStack = [];
 const redoStack = [];
-const thumbs = new Map(); // "src:index" -> Promise<objectURL>
+const thumbs = new Map(); // "src:index@size" -> Promise<objectURL>
+const bestThumbs = new Map(); // "src:index" -> 描画済みで最も高解像度の { size, url }
+let zoomLevel = loadZoom();
 let thumbQueue = Promise.resolve();
 let dragIds = null; // ページのドラッグ中に動かしているID
 
@@ -39,7 +43,11 @@ const empty = $('empty');
 const statusEl = $('status');
 const fileInput = $('file-input');
 const overlay = $('drop-overlay');
+const zoomInput = $('zoom');
+const zoomLabel = $('zoom-label');
 const btn = {
+  zoomIn: $('btn-zoom-in'),
+  zoomOut: $('btn-zoom-out'),
   add: $('btn-add'),
   open: $('btn-open'),
   selectAll: $('btn-select-all'),
@@ -115,6 +123,7 @@ function reset() {
   sources.length = 0;
   for (const p of thumbs.values()) p.then((url) => url && URL.revokeObjectURL(url));
   thumbs.clear();
+  bestThumbs.clear();
   pages = [];
   selected.clear();
   undoStack.length = 0;
@@ -128,24 +137,37 @@ function thumbKey(p) {
   return `${p.src}:${p.index}`;
 }
 
-function getThumb(p) {
-  const key = thumbKey(p);
+// 表示倍率に応じて必要な解像度を選ぶ。画質の段階を限ることで、倍率を少し変えただけでは再描画しない
+function thumbSize() {
+  const need = cardWidth() * (window.devicePixelRatio || 1);
+  return THUMB_SIZES.find((s) => s >= need) ?? THUMB_SIZES.at(-1);
+}
+
+function getThumb(p, size = thumbSize()) {
+  // 同じか高い解像度の画像がすでに描画中・描画済みなら、それを使う
+  const larger = THUMB_SIZES.filter((s) => s > size).map((s) => `${thumbKey(p)}@${s}`).find((k) => thumbs.has(k));
+  if (larger) return thumbs.get(larger);
+  const key = `${thumbKey(p)}@${size}`;
   if (!thumbs.has(key)) {
     // 一度に大量に描画するとメモリを食うので1枚ずつ順番に描画する
-    const job = thumbQueue.then(() => renderThumb(p)).catch((err) => {
+    const job = thumbQueue.then(() => renderThumb(p, size)).catch((err) => {
       console.error(err);
       return null;
     });
     thumbQueue = job;
     thumbs.set(key, job);
+    job.then((url) => {
+      const best = bestThumbs.get(thumbKey(p));
+      if (url && (!best || best.size < size)) bestThumbs.set(thumbKey(p), { size, url });
+    });
   }
   return thumbs.get(key);
 }
 
-async function renderThumb(p) {
+async function renderThumb(p, size) {
   const page = await sources[p.src].viewDoc.getPage(p.index + 1);
   const base = page.getViewport({ scale: 1 });
-  const viewport = page.getViewport({ scale: THUMB_SIZE / Math.max(base.width, base.height) });
+  const viewport = page.getViewport({ scale: size / Math.max(base.width, base.height) });
   const canvas = document.createElement('canvas');
   canvas.width = Math.ceil(viewport.width);
   canvas.height = Math.ceil(viewport.height);
@@ -180,21 +202,29 @@ function createCard(p, i) {
 
   const thumb = document.createElement('div');
   thumb.className = 'thumb';
-  const loading = document.createElement('span');
-  loading.className = 'loading';
-  loading.textContent = '読み込み中…';
-  thumb.appendChild(loading);
-  getThumb(p).then((url) => {
-    if (!url) {
-      loading.textContent = '表示できません';
-      return;
-    }
+  const showImage = (url) => {
     const img = document.createElement('img');
     img.src = url;
     img.alt = `${i + 1}ページ`;
     img.style.transform = `rotate(${p.rotation}deg)`;
     thumb.replaceChildren(img);
-  });
+  };
+  // 拡大直後は高解像度版ができるまで、手元にある画像を仮に表示しておく
+  const best = bestThumbs.get(thumbKey(p));
+  if (best) showImage(best.url);
+  else {
+    const loading = document.createElement('span');
+    loading.className = 'loading';
+    loading.textContent = '読み込み中…';
+    thumb.appendChild(loading);
+  }
+  const size = thumbSize();
+  if (!best || best.size < size) {
+    getThumb(p, size).then((url) => {
+      if (url) showImage(url);
+      else if (!best) thumb.firstChild.textContent = '表示できません';
+    });
+  }
 
   const meta = document.createElement('div');
   meta.className = 'meta';
@@ -281,6 +311,62 @@ function move(ids, targetId, after) {
   commit(next);
 }
 
+// ---- 表示倍率 ----
+function loadZoom() {
+  try {
+    const saved = Number(localStorage.getItem('zoomLevel'));
+    if (ZOOM_LEVELS.includes(saved)) return saved;
+  } catch {}
+  return 100;
+}
+
+function cardWidth() {
+  return Math.round(BASE_CARD_WIDTH * zoomLevel / 100);
+}
+
+function setZoom(level) {
+  const anchor = visibleAnchor();
+  const before = thumbSize();
+  zoomLevel = level;
+  try { localStorage.setItem('zoomLevel', level); } catch {}
+  applyZoom();
+  if (thumbSize() > before) render(); // 拡大して画質が足りなくなったら描き直す
+  restoreAnchor(anchor);
+}
+
+// 倍率を変えても見ていたページが画面の同じ高さに残るよう、画面上部のページを目印にする。
+// 続けて倍率を変えたときに目印が少しずつずれないよう、スクロールするまでは同じページを使い続ける
+let lastAnchor = null; // { id, scrollY }
+
+function visibleAnchor() {
+  const kept = lastAnchor && lastAnchor.scrollY === window.scrollY &&
+    grid.querySelector(`.card[data-id="${lastAnchor.id}"]`);
+  const top = document.querySelector('.toolbar').getBoundingClientRect().bottom;
+  const card = kept || [...grid.children].find((el) => el.getBoundingClientRect().bottom > top);
+  return card && { id: card.dataset.id, y: card.getBoundingClientRect().top };
+}
+
+function restoreAnchor(anchor) {
+  if (!anchor) return;
+  const card = grid.querySelector(`.card[data-id="${anchor.id}"]`);
+  if (card) window.scrollBy(0, card.getBoundingClientRect().top - anchor.y);
+  lastAnchor = { id: anchor.id, scrollY: window.scrollY };
+}
+
+function stepZoom(delta) {
+  const i = ZOOM_LEVELS.indexOf(zoomLevel) + delta;
+  if (i >= 0 && i < ZOOM_LEVELS.length) setZoom(ZOOM_LEVELS[i]);
+}
+
+function applyZoom() {
+  const i = ZOOM_LEVELS.indexOf(zoomLevel);
+  grid.style.setProperty('--card', `${cardWidth()}px`);
+  zoomInput.value = i;
+  zoomLabel.textContent = `${zoomLevel}%`;
+  btn.zoomOut.disabled = i === 0;
+  btn.zoomIn.disabled = i === ZOOM_LEVELS.length - 1;
+}
+
 function selectAll() {
   selected = new Set(pages.map((p) => p.id));
   render();
@@ -351,6 +437,9 @@ btn.undo.addEventListener('click', undo);
 btn.redo.addEventListener('click', redo);
 btn.reset.addEventListener('click', reset);
 btn.save.addEventListener('click', save);
+btn.zoomIn.addEventListener('click', () => stepZoom(1));
+btn.zoomOut.addEventListener('click', () => stepZoom(-1));
+zoomInput.addEventListener('input', () => setZoom(ZOOM_LEVELS[Number(zoomInput.value)]));
 
 // ---- イベント: カードのクリック(選択・個別操作) ----
 grid.addEventListener('click', (e) => {
@@ -474,6 +563,10 @@ document.addEventListener('keydown', (e) => {
       e.preventDefault();
       remove(selected);
     }
+  } else if (!mod && (key === '+' || key === '=' || key === ';')) {
+    stepZoom(1); // ⌘/Ctrl+＋ はブラウザ自体の拡大なので、修飾キーなしの＋／－を割り当てる
+  } else if (!mod && key === '-') {
+    stepZoom(-1);
   } else if (key === 'escape') {
     selected.clear();
     render();
@@ -484,4 +577,5 @@ window.addEventListener('beforeunload', (e) => {
   if (dirty && pages.length) e.preventDefault();
 });
 
+applyZoom();
 render();
