@@ -27,7 +27,9 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; height: 100%; }
+/* body の高さを固定すると、長いページでツールバーの上部固定(sticky)が外れてしまうので min-height にする */
+html, body { margin: 0; }
+body { min-height: 100vh; }
 html { scrollbar-gutter: stable; } /* スクロールバーの出入りで画面が横にずれないようにする */
 body {
   background: var(--bg);
@@ -154,6 +156,51 @@ main { padding: 16px; }
   font-size: 22px; font-weight: 700; color: var(--accent);
   pointer-events: none;
 }
+/* ---- 編集／閲覧の切り替え ---- */
+.mode { display: inline-flex; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.mode button { border: 0; border-radius: 0; padding: 5px 14px; }
+.mode button + button { border-left: 1px solid var(--border); }
+.mode button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+.group { display: contents; }
+body:not([data-mode="view"]) .view-only,
+body[data-mode="view"] .edit-only { display: none; }
+
+.page-nav { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.page-nav input {
+  width: 3.5em; padding: 4px 6px; text-align: center;
+  font: inherit; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 6px;
+}
+.page-nav input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+/* ---- 閲覧モード ---- */
+.viewer { display: flex; flex-direction: column; align-items: center; gap: 16px; padding-block: 8px 40px; }
+.view-page {
+  position: relative;
+  flex: none;
+  max-width: none;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .25);
+}
+.view-page canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* 文字選択用の透明な文字(pdf.js の pdf_viewer.css から必要な部分だけ抜粋) */
+.textLayer {
+  position: absolute; inset: 0; overflow: clip; opacity: 1; line-height: 1;
+  text-align: initial; text-size-adjust: none; forced-color-adjust: none;
+  transform-origin: 0 0; caret-color: CanvasText; z-index: 0;
+}
+.textLayer :is(span, br) { color: transparent; position: absolute; white-space: pre; cursor: text; transform-origin: 0% 0%; }
+.textLayer > :not(.markedContent), .textLayer .markedContent span:not(.markedContent) { z-index: 1; }
+.textLayer span.markedContent { top: 0; height: 0; }
+.textLayer ::selection { background: rgba(0, 100, 255, .25); }
+.textLayer br::selection { background: transparent; }
+.textLayer .endOfContent { display: block; position: absolute; inset: 100% 0 0; z-index: 0; cursor: default; user-select: none; }
+.textLayer.selecting .endOfContent { top: 0; }
+/* 回転したページでは、文字レイヤーを回転前の向きで作ってからCSSで回す(pdf.js の仕組み) */
+.textLayer[data-main-rotation="90"] { transform: rotate(90deg) translateY(-100%); }
+.textLayer[data-main-rotation="180"] { transform: rotate(180deg) translate(-100%, -100%); }
+.textLayer[data-main-rotation="270"] { transform: rotate(270deg) translateX(-100%); }
+
 dialog {
   width: min(480px, calc(100vw - 32px));
   padding: 24px;

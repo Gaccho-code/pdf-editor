@@ -10,16 +10,32 @@
 <body>
   <header class="toolbar">
     <div class="brand">PDF Page Editor</div>
+    <div class="mode" role="group" aria-label="表示モード">
+      <button id="mode-edit" aria-pressed="true" title="ページの並べ替え・削除などをする">編集</button>
+      <button id="mode-view" aria-pressed="false" title="ページを大きく表示して読む (V)" disabled>閲覧</button>
+    </div>
     <div class="actions">
       <button id="btn-add" class="primary" title="PDFを開く / 末尾に追加して結合">＋ PDFを追加</button>
       <span class="sep"></span>
-      <button id="btn-select-all" title="すべて選択 (⌘/Ctrl+A)">全選択</button>
-      <button id="btn-rotate-left" title="選択ページを左に90°回転" disabled>⟲ 左回転</button>
-      <button id="btn-rotate-right" title="選択ページを右に90°回転" disabled>⟳ 右回転</button>
-      <button id="btn-delete" class="danger" title="選択ページを削除 (Delete)" disabled>削除</button>
-      <span class="sep"></span>
-      <button id="btn-undo" title="元に戻す (⌘/Ctrl+Z)" disabled>↶</button>
-      <button id="btn-redo" title="やり直す (⌘/Ctrl+Shift+Z)" disabled>↷</button>
+      <span class="group edit-only">
+        <button id="btn-select-all" title="すべて選択 (⌘/Ctrl+A)">全選択</button>
+        <button id="btn-rotate-left" title="選択ページを左に90°回転" disabled>⟲ 左回転</button>
+        <button id="btn-rotate-right" title="選択ページを右に90°回転" disabled>⟳ 右回転</button>
+        <button id="btn-delete" class="danger" title="選択ページを削除 (Delete)" disabled>削除</button>
+        <span class="sep"></span>
+        <button id="btn-undo" title="元に戻す (⌘/Ctrl+Z)" disabled>↶</button>
+        <button id="btn-redo" title="やり直す (⌘/Ctrl+Shift+Z)" disabled>↷</button>
+      </span>
+      <span class="group view-only">
+        <button id="btn-prev" aria-label="前のページ" title="前のページ (←)">‹</button>
+        <span class="page-nav">
+          <input type="text" id="page-input" inputmode="numeric" aria-label="ページ番号" value="1">
+          <span>/ <span id="page-total">1</span></span>
+        </span>
+        <button id="btn-next" aria-label="次のページ" title="次のページ (→)">›</button>
+        <span class="sep"></span>
+        <button id="btn-fit" title="ページの幅を画面に合わせる">幅に合わせる</button>
+      </span>
       <span class="sep"></span>
       <div class="zoom" title="表示倍率">
         <button id="btn-zoom-out" aria-label="縮小">－</button>
@@ -73,6 +89,7 @@
       </div>
     </div>
     <div id="grid" class="grid" hidden></div>
+    <div id="viewer" class="viewer" hidden></div>
   </main>
 
   <div id="drop-overlay" class="drop-overlay" hidden>ドロップしてPDFを追加</div>

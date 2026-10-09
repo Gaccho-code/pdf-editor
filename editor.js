@@ -5,6 +5,7 @@
 
 import * as pdfjsLib from './lib/pdf.min.mjs';
 import { COMPRESS_LEVELS, recompressImages, rasterizePages } from './compress.js';
+import { Viewer, VIEW_ZOOM_LEVELS } from './viewer.js';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('./lib/pdf.worker.min.mjs', import.meta.url).href;
 const PDFJS_OPTIONS = {
@@ -34,6 +35,8 @@ const redoStack = [];
 const thumbs = new Map(); // "src:index@size" -> Promise<objectURL>
 const bestThumbs = new Map(); // "src:index" -> 描画済みで最も高解像度の { size, url }
 let zoomLevel = loadZoom();
+let mode = 'edit'; // 'edit'(サムネイル一覧で編集) / 'view'(ページを大きく表示して読む)
+let editScrollY = 0; // 閲覧モードから戻ったときに、編集画面のスクロール位置を復元する
 let thumbQueue = Promise.resolve();
 let dragIds = null; // ページのドラッグ中に動かしているID
 
@@ -48,7 +51,15 @@ const zoomInput = $('zoom');
 const zoomLabel = $('zoom-label');
 const compressDialog = $('compress-dialog');
 const compressResult = $('compress-result');
+const viewerEl = $('viewer');
+const pageInput = $('page-input');
+const pageTotal = $('page-total');
 const btn = {
+  modeEdit: $('mode-edit'),
+  modeView: $('mode-view'),
+  prev: $('btn-prev'),
+  next: $('btn-next'),
+  fit: $('btn-fit'),
   compress: $('btn-compress'),
   compressRun: $('btn-compress-run'),
   compressDownload: $('btn-compress-download'),
@@ -186,8 +197,11 @@ async function renderThumb(p, size) {
 // ---- 描画 ----
 function render() {
   const has = pages.length > 0;
+  if (mode === 'view' && !has) return setMode('edit');
   empty.hidden = has;
-  grid.hidden = !has;
+  grid.hidden = !has || mode === 'view';
+  // 閲覧中にPDFが追加された場合など、ページ並びが変わったら閲覧画面も作り直す
+  if (mode === 'view') openViewer(Math.max(0, viewer.current));
 
   // Undo/Redoで消えたページの選択は外す
   const ids = new Set(pages.map((p) => p.id));
@@ -276,9 +290,13 @@ function updateToolbar() {
   btn.save.disabled = pages.length === 0;
   btn.compress.disabled = pages.length === 0;
   btn.reset.disabled = sources.length === 0;
+  btn.modeView.disabled = pages.length === 0;
   btn.add.textContent = sources.length ? '＋ PDFを追加(結合)' : '＋ PDFを開く';
 
   if (!pages.length) setStatus('');
+  else if (mode === 'view') {
+    setStatus('閲覧モード　|　文字を選択してコピーできます・ページ番号を入力して移動できます・「編集」で並べ替えなどに戻ります');
+  }
   else {
     const fileCount = sources.length > 1 ? `${sources.length}ファイル / ` : '';
     setStatus(`${fileCount}${pages.length}ページ` + (n ? `・${n}ページ選択中` : '') +
@@ -316,6 +334,56 @@ function move(ids, targetId, after) {
   const next = [...rest.slice(0, at), ...moving, ...rest.slice(at)];
   if (next.every((p, i) => p === pages[i])) return; // 位置が変わらなければ履歴に積まない
   commit(next);
+}
+
+// ---- 閲覧モード ----
+const viewer = new Viewer(viewerEl, {
+  getTopInset: () => document.querySelector('.toolbar').getBoundingClientRect().bottom,
+  onPageChange: (i) => {
+    if (document.activeElement !== pageInput) pageInput.value = i + 1;
+    btn.prev.disabled = i <= 0;
+    btn.next.disabled = i >= viewer.pageCount - 1;
+  },
+  onZoomChange: ({ percent, index, fit }) => {
+    if (mode !== 'view') return;
+    zoomInput.value = index;
+    zoomLabel.textContent = `${percent}%`;
+    btn.zoomOut.disabled = percent <= VIEW_ZOOM_LEVELS[0];
+    btn.zoomIn.disabled = percent >= VIEW_ZOOM_LEVELS.at(-1);
+    btn.fit.setAttribute('aria-pressed', String(fit));
+  },
+});
+
+function setMode(next, startIndex = 0) {
+  if (next === mode || (next === 'view' && !pages.length)) return;
+  if (next === 'view') editScrollY = window.scrollY;
+  mode = next;
+  document.body.dataset.mode = mode;
+  btn.modeEdit.setAttribute('aria-pressed', String(mode === 'edit'));
+  btn.modeView.setAttribute('aria-pressed', String(mode === 'view'));
+  if (mode === 'view') {
+    zoomInput.max = VIEW_ZOOM_LEVELS.length - 1;
+    grid.hidden = true;
+    viewerEl.hidden = false;
+    openViewer(startIndex);
+    updateToolbar();
+  } else {
+    viewer.close();
+    viewerEl.hidden = true;
+    applyZoom();
+    render();
+    window.scrollTo(0, editScrollY);
+  }
+}
+
+function openViewer(startIndex) {
+  pageTotal.textContent = pages.length;
+  viewer.open(pages, (p) => sources[p.src].viewDoc.getPage(p.index + 1), startIndex);
+}
+
+// 拡大・縮小ボタンとキーは、編集モードではサムネイル、閲覧モードではページの大きさを変える
+function zoomBy(delta) {
+  mode === 'view' ? viewer.stepZoom(delta) : stepZoom(delta);
 }
 
 // ---- 表示倍率 ----
@@ -367,6 +435,7 @@ function stepZoom(delta) {
 
 function applyZoom() {
   const i = ZOOM_LEVELS.indexOf(zoomLevel);
+  zoomInput.max = ZOOM_LEVELS.length - 1;
   grid.style.setProperty('--card', `${cardWidth()}px`);
   zoomInput.value = i;
   zoomLabel.textContent = `${zoomLevel}%`;
@@ -535,11 +604,32 @@ compressDialog.addEventListener('change', resetCompressResult); // 圧縮レベ�
 compressDialog.addEventListener('cancel', (e) => {
   if (compressing) e.preventDefault(); // 圧縮中はEscで閉じない
 });
-btn.zoomIn.addEventListener('click', () => stepZoom(1));
-btn.zoomOut.addEventListener('click', () => stepZoom(-1));
-zoomInput.addEventListener('input', () => setZoom(ZOOM_LEVELS[Number(zoomInput.value)]));
+btn.zoomIn.addEventListener('click', () => zoomBy(1));
+btn.zoomOut.addEventListener('click', () => zoomBy(-1));
+zoomInput.addEventListener('input', () => {
+  const i = Number(zoomInput.value);
+  mode === 'view' ? viewer.setZoom(VIEW_ZOOM_LEVELS[i]) : setZoom(ZOOM_LEVELS[i]);
+});
+btn.modeEdit.addEventListener('click', () => setMode('edit'));
+btn.modeView.addEventListener('click', () => setMode('view'));
+btn.prev.addEventListener('click', () => viewer.scrollToPage(viewer.current - 1));
+btn.next.addEventListener('click', () => viewer.scrollToPage(viewer.current + 1));
+btn.fit.addEventListener('click', () => viewer.setZoom('fit'));
+pageInput.addEventListener('change', () => {
+  const n = parseInt(pageInput.value.replace(/[０-９]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 0xfee0)), 10);
+  if (n >= 1) viewer.scrollToPage(n - 1);
+  pageInput.value = viewer.current + 1;
+});
+pageInput.addEventListener('focus', () => pageInput.select());
 
 // ---- イベント: カードのクリック(選択・個別操作) ----
+// ページをダブルクリックすると、そのページから閲覧モードで開く
+grid.addEventListener('dblclick', (e) => {
+  const card = e.target.closest('.card');
+  if (!card || e.target.closest('button')) return;
+  setMode('view', pages.findIndex((p) => p.id === Number(card.dataset.id)));
+});
+
 grid.addEventListener('click', (e) => {
   const card = e.target.closest('.card');
   if (!card) {
@@ -643,9 +733,13 @@ document.addEventListener('drop', (e) => {
 // ---- イベント: キーボードショートカット ----
 document.addEventListener('keydown', (e) => {
   if (compressDialog.open) return; // ダイアログ表示中はページ操作のショートカットを止める
+  if (e.target === pageInput) return;
   const mod = e.metaKey || e.ctrlKey;
   const key = e.key.toLowerCase();
-  if (mod && key === 'z') {
+  if (mode === 'view') return viewModeKeys(e, mod, key);
+  if (!mod && key === 'v' && pages.length) {
+    setMode('view');
+  } else if (mod && key === 'z') {
     e.preventDefault();
     e.shiftKey ? redo() : undo();
   } else if (mod && key === 'y') {
@@ -663,14 +757,36 @@ document.addEventListener('keydown', (e) => {
       remove(selected);
     }
   } else if (!mod && (key === '+' || key === '=' || key === ';')) {
-    stepZoom(1); // ⌘/Ctrl+＋ はブラウザ自体の拡大なので、修飾キーなしの＋／－を割り当てる
+    zoomBy(1); // ⌘/Ctrl+＋ はブラウザ自体の拡大なので、修飾キーなしの＋／－を割り当てる
   } else if (!mod && key === '-') {
-    stepZoom(-1);
+    zoomBy(-1);
   } else if (key === 'escape') {
     selected.clear();
     render();
   }
 });
+
+// 閲覧モードでは、ページを消すなどの編集用ショートカットは効かないようにする
+function viewModeKeys(e, mod, key) {
+  if (mod && key === 's') {
+    e.preventDefault();
+    save();
+  } else if (mod) {
+    return; // ⌘/Ctrl+C(コピー)などはブラウザに任せる
+  } else if (key === '+' || key === '=' || key === ';') {
+    zoomBy(1);
+  } else if (key === '-') {
+    zoomBy(-1);
+  } else if (key === 'arrowleft') {
+    e.preventDefault();
+    viewer.scrollToPage(viewer.current - 1);
+  } else if (key === 'arrowright') {
+    e.preventDefault();
+    viewer.scrollToPage(viewer.current + 1);
+  } else if (key === 'escape' || key === 'v') {
+    setMode('edit');
+  }
+}
 
 window.addEventListener('beforeunload', (e) => {
   if (dirty && pages.length) e.preventDefault();
