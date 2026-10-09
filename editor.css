@@ -1,24 +1,27 @@
 :root {
-  --bg: #f4f5f7;
+  /* Adobe Acrobat 風: グレーの作業領域に白いパネル、アクセントは赤 */
+  --bg: #e8e8e8;
   --surface: #ffffff;
-  --text: #1f2328;
-  --muted: #6b7280;
-  --border: #d9dce1;
-  --accent: #2563eb;
-  --accent-weak: #dbe7ff;
-  --danger: #dc2626;
-  --shadow: 0 1px 3px rgba(0, 0, 0, .12);
+  --text: #2c2c2c;
+  --muted: #6e6e6e;
+  --border: #d3d3d3;
+  --accent: #d7261e;
+  --accent-weak: #fde8e7;
+  --accent-tint: rgba(215, 38, 30, .12);
+  --danger: #b0150f;
+  --shadow: 0 1px 3px rgba(0, 0, 0, .14);
 }
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #17191c;
-    --surface: #23262b;
-    --text: #e6e8eb;
-    --muted: #9aa1ab;
-    --border: #3a3f46;
-    --accent: #5b8cff;
-    --accent-weak: #22345c;
-    --danger: #f05252;
+    --bg: #1b1b1b;
+    --surface: #2c2c2c;
+    --text: #e8e8e8;
+    --muted: #a3a3a3;
+    --border: #454545;
+    --accent: #e3433b;
+    --accent-weak: #4a2421;
+    --accent-tint: rgba(227, 67, 59, .16);
+    --danger: #ff6b63;
     --shadow: 0 1px 3px rgba(0, 0, 0, .5);
   }
 }
@@ -39,7 +42,7 @@ body {
   background: var(--surface);
   border-bottom: 1px solid var(--border);
 }
-.brand { font-weight: 700; font-size: 15px; }
+.brand { font-weight: 700; font-size: 15px; color: var(--accent); }
 .actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-left: auto; }
 .sep { width: 1px; height: 22px; background: var(--border); margin: 0 4px; }
 
@@ -146,7 +149,7 @@ main { padding: 16px; }
 .drop-overlay {
   position: fixed; inset: 0; z-index: 20;
   display: grid; place-items: center;
-  background: rgba(37, 99, 235, .15);
+  background: var(--accent-tint);
   border: 4px dashed var(--accent);
   font-size: 22px; font-weight: 700; color: var(--accent);
   pointer-events: none;
