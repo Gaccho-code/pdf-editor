@@ -151,4 +151,32 @@ main { padding: 16px; }
   font-size: 22px; font-weight: 700; color: var(--accent);
   pointer-events: none;
 }
+dialog {
+  width: min(480px, calc(100vw - 32px));
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, .25);
+}
+dialog::backdrop { background: rgba(0, 0, 0, .35); }
+dialog h2 { margin: 0 0 16px; font-size: 18px; }
+dialog fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; }
+dialog legend { font-size: 12px; color: var(--muted); margin-bottom: 6px; padding: 0; }
+.level {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--border); border-radius: 8px;
+  cursor: pointer;
+}
+.level:has(input:checked) { border-color: var(--accent); background: var(--accent-weak); }
+.level input { margin-top: 4px; accent-color: var(--accent); }
+.level b { display: block; }
+.level small { display: block; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.level em { font-style: normal; color: var(--danger); }
+.compress-note { margin: 12px 0 0; font-size: 12px; color: var(--muted); }
+.compress-result { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--bg); font-size: 13px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
 [hidden] { display: none !important; }

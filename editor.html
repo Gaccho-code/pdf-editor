@@ -29,9 +29,38 @@
       </div>
       <span class="sep"></span>
       <button id="btn-reset" title="すべて閉じて最初から">クリア</button>
+      <button id="btn-compress" title="ファイルサイズを小さくして保存" disabled>圧縮して保存</button>
       <button id="btn-save" class="primary" title="編集後のPDFをダウンロード (⌘/Ctrl+S)" disabled>PDFを保存</button>
     </div>
   </header>
+
+  <dialog id="compress-dialog" aria-labelledby="compress-title">
+    <form method="dialog">
+      <h2 id="compress-title">圧縮して保存</h2>
+      <fieldset>
+        <legend>圧縮のしかた</legend>
+        <label class="level">
+          <input type="radio" name="level" value="light">
+          <span><b>軽め</b><small>画像を少しだけ小さくします。見た目はほぼ変わりません。</small></span>
+        </label>
+        <label class="level">
+          <input type="radio" name="level" value="standard" checked>
+          <span><b>標準（おすすめ）</b><small>画像を画面やメールで見るのに十分な画質にします。文字はそのままなので、選択や検索もできます。</small></span>
+        </label>
+        <label class="level">
+          <input type="radio" name="level" value="max">
+          <span><b>最大</b><small>ページ全体を画像にして、できるだけ小さくします。<em>文字の選択や検索はできなくなります。</em></small></span>
+        </label>
+      </fieldset>
+      <p class="compress-note">写真やスキャンした書類が多いPDFほど小さくなります。</p>
+      <p id="compress-result" class="compress-result" role="status" hidden></p>
+      <div class="dialog-actions">
+        <button value="cancel" formnovalidate>閉じる</button>
+        <button type="button" id="btn-compress-run" class="primary">圧縮する</button>
+        <button type="button" id="btn-compress-download" class="primary" hidden>ダウンロード</button>
+      </div>
+    </form>
+  </dialog>
 
   <div class="status" id="status"></div>
 

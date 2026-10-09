@@ -4,6 +4,7 @@
 // ファイルはすべてブラウザ内で処理し、外部には送信しない。
 
 import * as pdfjsLib from './lib/pdf.min.mjs';
+import { COMPRESS_LEVELS, recompressImages, rasterizePages } from './compress.js';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('./lib/pdf.worker.min.mjs', import.meta.url).href;
 const PDFJS_OPTIONS = {
@@ -45,7 +46,12 @@ const fileInput = $('file-input');
 const overlay = $('drop-overlay');
 const zoomInput = $('zoom');
 const zoomLabel = $('zoom-label');
+const compressDialog = $('compress-dialog');
+const compressResult = $('compress-result');
 const btn = {
+  compress: $('btn-compress'),
+  compressRun: $('btn-compress-run'),
+  compressDownload: $('btn-compress-download'),
   zoomIn: $('btn-zoom-in'),
   zoomOut: $('btn-zoom-out'),
   add: $('btn-add'),
@@ -268,6 +274,7 @@ function updateToolbar() {
   btn.undo.disabled = undoStack.length === 0;
   btn.redo.disabled = redoStack.length === 0;
   btn.save.disabled = pages.length === 0;
+  btn.compress.disabled = pages.length === 0;
   btn.reset.disabled = sources.length === 0;
   btn.add.textContent = sources.length ? '＋ PDFを追加(結合)' : '＋ PDFを開く';
 
@@ -373,29 +380,34 @@ function selectAll() {
 }
 
 // ---- 保存 ----
+// 現在のページ並びで新しいPDFを組み立てる(元ファイルのオブジェクトはコピーされるので、組み立て後に加工しても元は変わらない)
+async function buildPdf() {
+  const out = await PDFDocument.create();
+  // 元ファイルごとにまとめてコピーする
+  const bySrc = new Map();
+  for (const p of pages) {
+    if (!bySrc.has(p.src)) bySrc.set(p.src, []);
+    bySrc.get(p.src).push(p.index);
+  }
+  const copied = new Map();
+  for (const [src, indices] of bySrc) {
+    const copies = await out.copyPages(sources[src].editDoc, indices);
+    indices.forEach((index, k) => copied.set(`${src}:${index}`, copies[k]));
+  }
+  for (const p of pages) {
+    const page = copied.get(thumbKey(p));
+    if (p.rotation) page.setRotation(degrees((page.getRotation().angle + p.rotation) % 360));
+    out.addPage(page);
+  }
+  return out;
+}
+
 async function save() {
   if (!pages.length) return;
   btn.save.disabled = true;
   setStatus('PDFを作成中…');
   try {
-    const out = await PDFDocument.create();
-    // 元ファイルごとにまとめてコピーする
-    const bySrc = new Map();
-    for (const p of pages) {
-      if (!bySrc.has(p.src)) bySrc.set(p.src, []);
-      bySrc.get(p.src).push(p.index);
-    }
-    const copied = new Map();
-    for (const [src, indices] of bySrc) {
-      const copies = await out.copyPages(sources[src].editDoc, indices);
-      indices.forEach((index, k) => copied.set(`${src}:${index}`, copies[k]));
-    }
-    for (const p of pages) {
-      const page = copied.get(thumbKey(p));
-      if (p.rotation) page.setRotation(degrees((page.getRotation().angle + p.rotation) % 360));
-      out.addPage(page);
-    }
-    const bytes = await out.save();
+    const bytes = await (await buildPdf()).save();
     download(bytes, outputName());
     dirty = false;
     flash('保存しました。');
@@ -408,9 +420,88 @@ async function save() {
   }
 }
 
-function outputName() {
+function outputName(suffix = sources.length > 1 ? 'merged' : 'edited') {
   const base = sources[0].name.replace(/\.pdf$/i, '');
-  return `${base}_${sources.length > 1 ? 'merged' : 'edited'}.pdf`;
+  return `${base}_${suffix}.pdf`;
+}
+
+// ---- 圧縮して保存 ----
+// 圧縮は時間がかかるので、結果のサイズを見せてから利用者がダウンロードする
+let compressed = null; // { bytes, level }
+let compressing = false;
+
+function openCompressDialog() {
+  if (!pages.length) return;
+  resetCompressResult();
+  compressDialog.showModal();
+}
+
+function resetCompressResult() {
+  compressed = null;
+  compressResult.hidden = true;
+  compressResult.textContent = '';
+  btn.compressRun.hidden = false;
+  btn.compressDownload.hidden = true;
+}
+
+async function runCompress() {
+  const level = compressDialog.querySelector('input[name="level"]:checked').value;
+  const cfg = COMPRESS_LEVELS[level];
+  compressing = true;
+  btn.compressRun.disabled = true;
+  compressDialog.querySelectorAll('input[name="level"]').forEach((el) => (el.disabled = true));
+  compressResult.hidden = false;
+  const progress = (label) => (done, total) => (compressResult.textContent = `${label}… ${done} / ${total}`);
+  try {
+    compressResult.textContent = '圧縮前のサイズを確認中…';
+    const before = (await (await buildPdf()).save()).length;
+    let bytes;
+    if (cfg.rasterize) {
+      const items = pages.map((p) => ({
+        getPage: () => sources[p.src].viewDoc.getPage(p.index + 1),
+        rotation: p.rotation,
+      }));
+      bytes = await rasterizePages(items, cfg, progress('ページを画像に変換中'));
+    } else {
+      const doc = await buildPdf();
+      await recompressImages(doc, cfg, progress('画像を圧縮中'));
+      compressResult.textContent = 'PDFを作成中…';
+      bytes = await doc.save();
+    }
+    const after = bytes.length;
+    if (after < before * 0.97) {
+      compressed = { bytes, level };
+      const rate = Math.round((1 - after / before) * 100);
+      compressResult.innerHTML = `<b>${formatSize(before)} → ${formatSize(after)}</b>（${rate}%小さくなりました）`;
+      btn.compressRun.hidden = true;
+      btn.compressDownload.hidden = false;
+      btn.compressDownload.focus();
+    } else {
+      compressResult.textContent = `これ以上小さくできませんでした（${formatSize(before)}）。` +
+        // 小さなPDFは画像化するとかえって大きくなるので、ある程度大きいときだけ「最大」を勧める
+        (!cfg.rasterize && before >= 500 * 1024 ? '文字が中心のPDFは「最大」を選ぶと小さくなる場合があります。' : '');
+    }
+  } catch (err) {
+    console.error(err);
+    compressResult.textContent = '圧縮に失敗しました。' + err.message;
+  } finally {
+    compressing = false;
+    btn.compressRun.disabled = false;
+    compressDialog.querySelectorAll('input[name="level"]').forEach((el) => (el.disabled = false));
+  }
+}
+
+function downloadCompressed() {
+  if (!compressed) return;
+  download(compressed.bytes, outputName('compressed'));
+  dirty = false;
+  compressDialog.close();
+  flash('圧縮したPDFを保存しました。');
+}
+
+function formatSize(n) {
+  if (n < 1024 * 1024) return `${Math.max(1, Math.round(n / 1024))} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
 }
 
 function download(bytes, name) {
@@ -437,6 +528,13 @@ btn.undo.addEventListener('click', undo);
 btn.redo.addEventListener('click', redo);
 btn.reset.addEventListener('click', reset);
 btn.save.addEventListener('click', save);
+btn.compress.addEventListener('click', openCompressDialog);
+btn.compressRun.addEventListener('click', runCompress);
+btn.compressDownload.addEventListener('click', downloadCompressed);
+compressDialog.addEventListener('change', resetCompressResult); // 圧縮レベルを変えたら結果を捨ててやり直す
+compressDialog.addEventListener('cancel', (e) => {
+  if (compressing) e.preventDefault(); // 圧縮中はEscで閉じない
+});
 btn.zoomIn.addEventListener('click', () => stepZoom(1));
 btn.zoomOut.addEventListener('click', () => stepZoom(-1));
 zoomInput.addEventListener('input', () => setZoom(ZOOM_LEVELS[Number(zoomInput.value)]));
@@ -544,6 +642,7 @@ document.addEventListener('drop', (e) => {
 
 // ---- イベント: キーボードショートカット ----
 document.addEventListener('keydown', (e) => {
+  if (compressDialog.open) return; // ダイアログ表示中はページ操作のショートカットを止める
   const mod = e.metaKey || e.ctrlKey;
   const key = e.key.toLowerCase();
   if (mod && key === 'z') {

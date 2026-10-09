@@ -10,7 +10,7 @@ stage=$(mktemp -d)
 trap 'rm -rf "$stage"' EXIT
 
 mkdir -p "$stage/pdf-editor" dist
-cp -R manifest.json background.js editor.html editor.css editor.js icons lib "$stage/pdf-editor/"
+cp -R manifest.json background.js editor.html editor.css editor.js compress.js icons lib "$stage/pdf-editor/"
 find "$stage" -name .DS_Store -delete
 rm -f "$out"
 (cd "$stage" && zip -qr -X - pdf-editor) > "$out"

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "PDF Page Editor",
-  "version": "1.1.0",
-  "description": "PDFのページ並べ替え・削除・回転・結合をブラウザ内だけで行う無料ツール",
+  "version": "1.2.0",
+  "description": "PDFのページ並べ替え・削除・回転・結合・圧縮をブラウザ内だけで行う無料ツール",
   "action": {
     "default_title": "PDFを編集",
     "default_icon": {

@@ -134,15 +134,15 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
     <div class="doc-head">
       <div class="eyebrow">要件定義書 / 開発資料</div>
       <h1>無料PDF編集ツール「PDF Page Editor」要件定義書</h1>
-      <p class="lead">PDFのページの並べ替え・削除・回転・結合・表示倍率の変更を、社外にファイルを出さずに無料で行うChrome拡張機能について、目的・要件・構成・運用をまとめます。</p>
+      <p class="lead">PDFのページの並べ替え・削除・回転・結合・表示倍率の変更・ファイルサイズの圧縮を、社外にファイルを出さずに無料で行うChrome拡張機能について、目的・要件・構成・運用をまとめます。</p>
     </div>
 
     <section id="info">
       <h2><span class="no">0</span>文書情報</h2>
       <div class="tbl"><table class="meta-tbl">
         <tr><th>文書名</th><td>PDF Page Editor 要件定義書</td></tr>
-        <tr><th>文書の版</th><td>1.1（2026年10月9日）</td></tr>
-        <tr><th>対象バージョン</th><td>PDF Page Editor v1.1.0</td></tr>
+        <tr><th>文書の版</th><td>1.2（2026年10月9日）</td></tr>
+        <tr><th>対象バージョン</th><td>PDF Page Editor v1.2.0</td></tr>
         <tr><th>ソースコード</th><td><a href="https://github.com/Gaccho-code/pdf-editor">github.com/Gaccho-code/pdf-editor</a>（公開・MIT License）</td></tr>
         <tr><th>状態</th><td><span class="chip todo">ドラフト</span> 社内レビュー前</td></tr>
       </table></div>
@@ -152,6 +152,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
         <tbody>
           <tr><td class="nw">1.0</td><td class="nw">2026-10-09</td><td>初版。v1.1.0（表示倍率の変更機能を追加）の時点の内容で作成</td></tr>
           <tr><td class="nw">1.1</td><td class="nw">2026-10-09</td><td>GitHubでの公開に合わせ、配布・運用、リスク、ロードマップ、未決事項を更新</td></tr>
+          <tr><td class="nw">1.2</td><td class="nw">2026-10-09</td><td>v1.2.0 のファイルサイズ圧縮機能（FR-15）を追加</td></tr>
         </tbody>
       </table></div>
     </section>
@@ -174,7 +175,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <div class="tbl"><table>
         <thead><tr><th>区分</th><th>内容</th></tr></thead>
         <tbody>
-          <tr><td class="nw"><span class="chip ok">対象</span></td><td>ページ単位の編集（並べ替え・削除・回転・結合）、編集結果のPDF保存、サムネイルの表示倍率の変更</td></tr>
+          <tr><td class="nw"><span class="chip ok">対象</span></td><td>ページ単位の編集（並べ替え・削除・回転・結合）、編集結果のPDF保存、サムネイルの表示倍率の変更、ファイルサイズの圧縮</td></tr>
           <tr><td class="nw"><span class="chip risk">対象外</span></td><td>ページ内の文字や画像の編集、注釈・署名の追加、OCR、PDF以外の形式への変換、パスワードの設定・解除、クラウド保存や共有</td></tr>
         </tbody>
       </table></div>
@@ -223,7 +224,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
 
     <section id="functional">
       <h2><span class="no">4</span>機能要件</h2>
-      <p>状態は v1.1.0 時点。「実装済」は編集画面単体での動作確認まで完了したものを指す（詳細は「9. テスト」）。</p>
+      <p>状態は v1.2.0 時点。「実装済」は編集画面単体での動作確認まで完了したものを指す（詳細は「9. テスト」）。</p>
       <div class="tbl"><table>
         <thead><tr><th class="id">ID</th><th>機能</th><th>要件</th><th>状態</th></tr></thead>
         <tbody>
@@ -240,6 +241,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td class="id">FR-11</td><td class="nw">保存</td><td>現在のページ並びでPDFを作り、ダウンロードする。ファイル名は「最初に読み込んだファイル名_edited.pdf」、複数ファイルを結合した場合は「_merged.pdf」。元ファイルは変更しない。⌘/Ctrl+S でも保存できる。</td><td><span class="chip ok">実装済</span></td></tr>
           <tr><td class="id">FR-12</td><td class="nw">クリア</td><td>読み込んだPDFと編集内容をすべて破棄して初期状態に戻す。未保存の編集がある場合は確認する。</td><td><span class="chip ok">実装済</span></td></tr>
           <tr><td class="id">FR-13</td><td class="nw">離脱時の警告</td><td>未保存の編集がある状態でタブを閉じようとすると、ブラウザの確認を表示する。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-15</td><td class="nw">圧縮して保存</td><td>3段階から選んでファイルサイズを小さくし、圧縮前後のサイズを表示してからダウンロードする（<code>_compressed.pdf</code>）。<br>・<b>軽め</b>：JPEG画像を200dpi相当・画質85%に縮小・再圧縮<br>・<b>標準</b>：JPEG画像を150dpi相当・画質75%に縮小・再圧縮（文字・図形はそのまま）<br>・<b>最大</b>：全ページを120dpi・画質65%の画像にする（文字の選択・検索は不可になる）<br>3%以上小さくならない場合は保存せず、その旨を表示する。</td><td><span class="chip ok">実装済</span></td></tr>
           <tr><td class="id">FR-14</td><td class="nw">エラー表示</td><td>パスワード保護・暗号化されたPDF、壊れたPDFは読み込まず、ファイル名と理由を表示する。</td><td><span class="chip ok">実装済</span></td></tr>
         </tbody>
       </table></div>
@@ -306,7 +308,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
         <tbody>
           <tr><td class="nw"><code>manifest.json</code></td><td>拡張機能の定義（Manifest V3、名前・版・アイコン）</td></tr>
           <tr><td class="nw"><code>background.js</code></td><td>アイコンが押されたら編集画面のタブを開く。拡張機能のAPIを使うのはこのファイルのみ。</td></tr>
-          <tr><td class="nw"><code>editor.html / .css / .js</code></td><td>編集画面。読み込み・表示・編集・保存のすべての処理</td></tr>
+          <tr><td class="nw"><code>editor.html / .css / .js</code></td><td>編集画面。読み込み・表示・編集・保存の処理</td></tr>
+          <tr><td class="nw"><code>compress.js</code></td><td>ファイルサイズの圧縮（画像の再圧縮・ページの画像化）</td></tr>
           <tr><td class="nw"><code>lib/</code></td><td>同梱ライブラリとそのライセンス文書</td></tr>
           <tr><td class="nw"><code>icons/</code></td><td>拡張機能のアイコン（16 / 48 / 128px）</td></tr>
           <tr><td class="nw"><code>scripts/package.sh</code></td><td>配布用のZIP（<code>dist/pdf-editor-v版.zip</code>）を作る</td></tr>
@@ -336,6 +339,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
         <div class="decision"><b>編集は「ページ並び」というデータの上で行い、保存時にだけPDFを作る</b><p>操作が軽く、元に戻す・やり直しを簡単に実現できる。元のPDFは最後まで変更しない。</p></div>
         <div class="decision"><b>暗号化PDFは読み込み時点で断る</b><p>pdf-lib は暗号化されたPDFを正しく書き出せないため、編集した後で保存に失敗するより、最初に分かるほうが利用者の手間が少ない。</p></div>
         <div class="decision"><b>サムネイルは1枚ずつ順番に描画し、解像度は3段階に限る</b><p>大量のページを同時に描画するとメモリが不足するため。倍率を少し変えただけでは描き直さず、画質が足りなくなったときだけ高解像度で描く。</p></div>
+        <div class="decision"><b>圧縮は「画像の再圧縮」と「ページの画像化」の2方式にする</b><p>文字を残したまま確実に効くのは、PDF内のJPEG画像の縮小・再圧縮。JPEGはブラウザ自身で読み書きでき、追加のライブラリが要らない。文字中心のPDFでも小さくしたい場合のために、文字が選択できなくなることを明示したうえでページの画像化も用意した。画像の表示サイズまでは解析せず、「最も大きいページ全体に表示されても指定の解像度を下回らない大きさ」を上限にしている。</p></div>
         <div class="decision"><b>ライブラリはCDNを使わず同梱する</b><p>オフラインで動作させ、外部への通信をゼロにするため。拡張機能のセキュリティ方針（CSP）上もこの方が確実。</p></div>
       </div>
     </section>
@@ -349,6 +353,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td class="nw">しおり</td><td>元ファイルのしおり（目次）は保存後のPDFに残らない。</td><td>将来対応候補（FR-F3）。</td></tr>
           <tr><td class="nw">入力フォーム</td><td>入力欄付きのPDFは、保存後に入力欄が正しく動かない場合がある。</td><td>入力を済ませてから編集する。</td></tr>
           <tr><td class="nw">大きなファイル</td><td>PDFの内容をメモリに保持するため、数百MB級のPDFでは動作が重くなる可能性がある。</td><td>分割してから編集する。上限は今後計測する。</td></tr>
+          <tr><td class="nw">圧縮の対象</td><td>「軽め」「標準」で縮小するのはJPEG形式（グレー・RGB）の画像のみ。PNG形式の画像、CMYKの画像、白黒2値のスキャン画像、文字やフォントは圧縮しない。</td><td>文字が中心のPDFは「最大」を使う。</td></tr>
+          <tr><td class="nw">圧縮「最大」</td><td>ページ全体を画像にするため、文字の選択・検索、リンク、しおりが失われる。</td><td>提出用など文字情報が必要なPDFでは「標準」を使う。</td></tr>
           <tr><td class="nw">編集履歴</td><td>元に戻す履歴は、タブを閉じると消える。</td><td>こまめに保存する。</td></tr>
         </tbody>
       </table></div>
@@ -367,6 +373,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td>保存したPDFのページ数・順番・回転角度（7ページ、指定のページのみ90°）</td><td><span class="chip ok">合格</span></td></tr>
           <tr><td>表示倍率6段階のページ幅（102〜510px）、倍率の引き継ぎ、拡大時の高解像度での描き直し</td><td><span class="chip ok">合格</span></td></tr>
           <tr><td>縦長ページの縦横比、回転後の表示</td><td><span class="chip ok">合格</span></td></tr>
+          <tr><td>圧縮：写真入りPDF（2.0MB）が軽め493KB・標準242KB・最大264KBになること、画像の解像度が各レベルの設定どおりであること</td><td><span class="chip ok">合格</span></td></tr>
+          <tr><td>圧縮：圧縮後のPDFの色・向き・回転が元と一致すること（目視）、文字だけのPDFでは「これ以上小さくできません」と表示すること</td><td><span class="chip ok">合格</span></td></tr>
         </tbody>
       </table></div>
       <h3>9.2 未実施（社内展開前に実施する）</h3>
@@ -377,6 +385,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td>Windows 環境での導入手順と動作</td><td><span class="chip todo">未実施</span></td></tr>
           <tr><td>日本語を含む実際の業務PDF（スキャン書類、Word・Excelから作ったPDF）の表示と保存</td><td><span class="chip todo">未実施</span></td></tr>
           <tr><td>100ページ以上・数十MB以上のPDFでの性能（NFR-06）</td><td><span class="chip todo">未実施</span></td></tr>
+          <tr><td>実際のスキャン書類・写真入り資料での圧縮率と画質（FR-15）</td><td><span class="chip todo">未実施</span></td></tr>
           <tr><td>暗号化PDF・壊れたPDFを読み込んだときのエラー表示</td><td><span class="chip todo">未実施</span></td></tr>
           <tr><td>ITに不慣れな社員が手順書だけで導入できること</td><td><span class="chip todo">未実施</span></td></tr>
         </tbody>
@@ -436,7 +445,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <div class="tbl"><table>
         <thead><tr><th>段階</th><th>内容</th><th>完了の目安</th></tr></thead>
         <tbody>
-          <tr><td class="nw"><span class="chip ok">完了</span> 開発</td><td>v1.0.0（並べ替え・削除・回転・結合）、v1.1.0（表示倍率）</td><td>完了</td></tr>
+          <tr><td class="nw"><span class="chip ok">完了</span> 開発</td><td>v1.0.0（並べ替え・削除・回転・結合）、v1.1.0（表示倍率）、v1.2.0（ファイルサイズの圧縮）</td><td>完了</td></tr>
           <tr><td class="nw"><span class="chip ok">完了</span> 公開</td><td>GitHub でソースコード・資料・配布用ZIPを公開</td><td>完了</td></tr>
           <tr><td class="nw"><span class="chip todo">次</span> 検証</td><td>9.2 の未実施テストと、情報システム担当への管理ポリシーの確認</td><td>全項目が合格</td></tr>
           <tr><td class="nw"><span class="chip plan">予定</span> 試用</td><td>数名の社員に導入・利用してもらい、手順書と使い勝手の改善点を集める</td><td>試用者全員が導入完了</td></tr>
@@ -460,7 +469,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       </table></div>
     </section>
 
-    <footer>PDF Page Editor 要件定義書 第1.1版 ／ 2026年10月9日 ／ 対象：v1.1.0 ／ <a href="./">トップへ戻る</a></footer>
+    <footer>PDF Page Editor 要件定義書 第1.2版 ／ 2026年10月9日 ／ 対象：v1.2.0 ／ <a href="./">トップへ戻る</a></footer>
   </main>
 </div>
 </body>
