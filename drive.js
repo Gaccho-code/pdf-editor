@@ -6,7 +6,7 @@
 
 // Google Cloud で作成した OAuth クライアントID。空のあいだはドライブ連携を表示しない。
 // クライアントIDは秘密情報ではない(ページを開けば誰でも見られる値)ので、ここに書いてよい。
-export const DRIVE_CLIENT_ID = '';
+export const DRIVE_CLIENT_ID = '933497434046-osuvtsa9ao38evdjgn15nm6sstbtgrnn.apps.googleusercontent.com';
 
 const SCOPE = 'https://www.googleapis.com/auth/drive.file';
 const API = 'https://www.googleapis.com/drive/v3/files';
