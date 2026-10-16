@@ -50,6 +50,7 @@ background.js   アイコンクリックで editor.html を開く
 editor.html/css/js  編集画面
 compress.js     ファイルサイズの圧縮（画像の再圧縮・ページの画像化）
 viewer.js       閲覧モード（ページの大きな表示・文字選択）
+cleanup.js      保存時に、削除したページだけで使っていたデータ（画像・ページ本体）を取り除く
 lib/            同梱ライブラリ（CDNは使わない）
   pdf.min.mjs, pdf.worker.min.mjs, cmaps/, standard_fonts/  … pdf.js 4.10.38（Apache-2.0）サムネイル表示用
   pdf-lib.min.js  … pdf-lib 1.17.1（MIT）PDFの書き出し用

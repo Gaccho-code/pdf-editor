@@ -6,6 +6,7 @@
 import * as pdfjsLib from './lib/pdf.min.mjs';
 import { COMPRESS_LEVELS, recompressImages, rasterizePages } from './compress.js';
 import { Viewer, VIEW_ZOOM_LEVELS } from './viewer.js';
+import { removeUnusedData } from './cleanup.js';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('./lib/pdf.worker.min.mjs', import.meta.url).href;
 const PDFJS_OPTIONS = {
@@ -468,6 +469,7 @@ async function buildPdf() {
     if (p.rotation) page.setRotation(degrees((page.getRotation().angle + p.rotation) % 360));
     out.addPage(page);
   }
+  removeUnusedData(out); // 削除したページだけで使っていた画像などが残らないようにする
   return out;
 }
 
