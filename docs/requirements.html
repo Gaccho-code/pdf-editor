@@ -141,8 +141,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <h2><span class="no">0</span>文書情報</h2>
       <div class="tbl"><table class="meta-tbl">
         <tr><th>文書名</th><td>PDF Page Editor 要件定義書</td></tr>
-        <tr><th>文書の版</th><td>1.4（2026年10月16日）</td></tr>
-        <tr><th>対象バージョン</th><td>PDF Page Editor v1.3.2</td></tr>
+        <tr><th>文書の版</th><td>1.5（2026年10月16日）</td></tr>
+        <tr><th>対象バージョン</th><td>PDF Page Editor v1.4.0</td></tr>
         <tr><th>ソースコード</th><td><a href="https://github.com/Gaccho-code/pdf-editor">github.com/Gaccho-code/pdf-editor</a>（公開・MIT License）</td></tr>
         <tr><th>状態</th><td><span class="chip todo">ドラフト</span> 社内レビュー前</td></tr>
       </table></div>
@@ -155,6 +155,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td class="nw">1.2</td><td class="nw">2026-10-09</td><td>v1.2.0 のファイルサイズ圧縮機能（FR-15）を追加</td></tr>
           <tr><td class="nw">1.3</td><td class="nw">2026-10-09</td><td>v1.3.0 の閲覧モード（FR-16）を追加。今後の機能候補からページ拡大表示（FR-F2）を削除</td></tr>
           <tr><td class="nw">1.4</td><td class="nw">2026-10-16</td><td>v1.3.2 で、保存時に削除したページのデータを取り除くようにした（FR-11・NFR-11）</td></tr>
+          <tr><td class="nw">1.5</td><td class="nw">2026-10-16</td><td>v1.4.0 のWeb版とGoogleドライブ連携（FR-17〜19、NFR-12）を追加。構成・設計判断・配布・リスク・ロードマップ・未決事項を更新</td></tr>
         </tbody>
       </table></div>
     </section>
@@ -226,7 +227,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
 
     <section id="functional">
       <h2><span class="no">4</span>機能要件</h2>
-      <p>状態は v1.3.2 時点。「実装済」は編集画面単体での動作確認まで完了したものを指す（詳細は「9. テスト」）。</p>
+      <p>状態は v1.4.0 時点。「実装済」は編集画面単体での動作確認まで完了したものを指す（詳細は「9. テスト」）。</p>
       <div class="tbl"><table>
         <thead><tr><th class="id">ID</th><th>機能</th><th>要件</th><th>状態</th></tr></thead>
         <tbody>
@@ -245,6 +246,9 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td class="id">FR-13</td><td class="nw">離脱時の警告</td><td>未保存の編集がある状態でタブを閉じようとすると、ブラウザの確認を表示する。</td><td><span class="chip ok">実装済</span></td></tr>
           <tr><td class="id">FR-15</td><td class="nw">圧縮して保存</td><td>3段階から選んでファイルサイズを小さくし、圧縮前後のサイズを表示してからダウンロードする（<code>_compressed.pdf</code>）。<br>・<b>軽め</b>：JPEG画像を200dpi相当・画質85%に縮小・再圧縮<br>・<b>標準</b>：JPEG画像を150dpi相当・画質75%に縮小・再圧縮（文字・図形はそのまま）<br>・<b>最大</b>：全ページを120dpi・画質65%の画像にする（文字の選択・検索は不可になる）<br>3%以上小さくならない場合は保存せず、その旨を表示する。</td><td><span class="chip ok">実装済</span></td></tr>
           <tr><td class="id">FR-16</td><td class="nw">閲覧モード</td><td>ツールバーの「編集／閲覧」で切り替える（V キー、ページのダブルクリックでも開ける）。ページを縦に並べて大きく表示し、50〜400%の拡大・縮小と「幅に合わせる」（初期表示）、前後のページ・ページ番号入力・← → キーでの移動に対応する。文字を選択してコピーできる。編集中のページ並び（順番・回転・削除）をそのまま表示するので、保存前の確認にも使える。閲覧モードでは削除などの編集操作は効かない。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-17</td><td class="nw">Web版</td><td>インストールせずに <code>https://gaccho-code.github.io/pdf-editor/app/</code> で使える。機能は拡張機能版と同じ（FR-01 の起動方法のみ異なる）。拡張機能版と同じファイルをそのまま公開する。</td><td><span class="chip ok">実装済</span></td></tr>
+          <tr><td class="id">FR-18</td><td class="nw">ドライブから開く</td><td>Googleドライブで PDF を右クリック →「アプリで開く」→「PDF Page Editor」で Web版が開き、「ドライブから読み込む」を押すと選んだPDFを読み込む（初回のみ Google アカウントの確認）。共有ドライブのファイルにも対応する。</td><td><span class="chip todo">Google側の設定待ち</span></td></tr>
+          <tr><td class="id">FR-19</td><td class="nw">ドライブに保存</td><td>ドライブから開いたPDFがある場合、「ドライブに保存」で元のPDFと同じフォルダに新しいファイルとして保存し、保存したファイルへのリンクを表示する。「圧縮して保存」でも選べる。元のファイルは上書きしない。従来どおりのダウンロードも使える。</td><td><span class="chip todo">Google側の設定待ち</span></td></tr>
           <tr><td class="id">FR-14</td><td class="nw">エラー表示</td><td>パスワード保護・暗号化されたPDF、壊れたPDFは読み込まず、ファイル名と理由を表示する。</td><td><span class="chip ok">実装済</span></td></tr>
         </tbody>
       </table></div>
@@ -267,11 +271,12 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <div class="tbl"><table>
         <thead><tr><th class="id">ID</th><th>区分</th><th>要件</th><th>状態</th></tr></thead>
         <tbody>
-          <tr><td class="id">NFR-01</td><td class="nw">情報セキュリティ</td><td>PDFの内容を外部に送信しない。外部サーバーへの通信を行わず、ライブラリもCDNから読み込まずに同梱する。</td><td><span class="chip ok">満たす</span></td></tr>
+          <tr><td class="id">NFR-01</td><td class="nw">情報セキュリティ</td><td>PDFの内容を開発者や第三者のサーバーに送信しない。ライブラリはCDNから読み込まずに同梱する。Googleドライブ連携では、PDFは Google ドライブと利用者のブラウザの間で直接やり取りする。</td><td><span class="chip ok">満たす</span></td></tr>
           <tr><td class="id">NFR-02</td><td class="nw">最小権限</td><td>拡張機能として、タブの閲覧・ファイルアクセスなどの権限を要求しない。</td><td><span class="chip ok">満たす</span></td></tr>
-          <tr><td class="id">NFR-03</td><td class="nw">オフライン動作</td><td>インターネットに接続していなくても全機能が使える。</td><td><span class="chip ok">満たす</span></td></tr>
+          <tr><td class="id">NFR-03</td><td class="nw">オフライン動作</td><td>拡張機能版は、インターネットに接続していなくても全機能が使える（Web版は接続が必要）。</td><td><span class="chip ok">満たす</span></td></tr>
           <tr><td class="id">NFR-04</td><td class="nw">コスト</td><td>利用・配布・運用に費用がかからない。使用するライブラリは商用利用可能なオープンソースに限る。</td><td><span class="chip ok">満たす</span></td></tr>
           <tr><td class="id">NFR-11</td><td class="nw">情報の残留防止</td><td>削除したページの内容が、保存したPDFの内部データとして残らないこと。PDFの作り方によっては、ページ間で共有された画像の一覧やページ間のリンクを通じて削除したページのデータがコピーされるため、保存時に取り除く。</td><td><span class="chip ok">満たす</span></td></tr>
+          <tr><td class="id">NFR-12</td><td class="nw">Web版の通信制限</td><td>Web版のページは、読み込むプログラムと通信先を、自身のサイトと Google（ログイン・ドライブAPI）だけに制限する（Content-Security-Policy）。ドライブへの権限は、開いた・保存したファイルだけを扱える <code>drive.file</code> のみとする。</td><td><span class="chip ok">満たす</span></td></tr>
           <tr><td class="id">NFR-05</td><td class="nw">非破壊</td><td>元ファイルを書き換えない。保存は常に新しいファイルとしてダウンロードする。</td><td><span class="chip ok">満たす</span></td></tr>
           <tr><td class="id">NFR-06</td><td class="nw">性能</td><td>目標：100ページ程度のPDFで、読み込み開始から操作可能になるまで数秒以内、全サムネイルの表示が30秒以内。</td><td><span class="chip todo">未計測</span></td></tr>
           <tr><td class="id">NFR-07</td><td class="nw">使いやすさ</td><td>画面の文言はすべて日本語。主要な操作はマウスだけで完結し、キーボードショートカットは補助とする。</td><td><span class="chip ok">満たす</span></td></tr>
@@ -315,6 +320,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td class="nw"><code>compress.js</code></td><td>ファイルサイズの圧縮（画像の再圧縮・ページの画像化）</td></tr>
           <tr><td class="nw"><code>viewer.js</code></td><td>閲覧モード（ページの大きな表示・文字選択）</td></tr>
           <tr><td class="nw"><code>cleanup.js</code></td><td>保存時に、削除したページだけで使っていたデータを取り除く</td></tr>
+          <tr><td class="nw"><code>drive.js</code></td><td>Googleドライブ連携（Web版のみ）</td></tr>
+          <tr><td class="nw"><code>scripts/build-site.sh</code><br><code>.github/workflows/pages.yml</code></td><td>資料とWeb版を組み立てて GitHub Pages に公開する</td></tr>
           <tr><td class="nw"><code>lib/</code></td><td>同梱ライブラリとそのライセンス文書</td></tr>
           <tr><td class="nw"><code>icons/</code></td><td>拡張機能のアイコン（16 / 48 / 128px）</td></tr>
           <tr><td class="nw"><code>scripts/package.sh</code></td><td>配布用のZIP（<code>dist/pdf-editor-v版.zip</code>）を作る</td></tr>
@@ -347,6 +354,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
         <div class="decision"><b>圧縮は「画像の再圧縮」と「ページの画像化」の2方式にする</b><p>文字を残したまま確実に効くのは、PDF内のJPEG画像の縮小・再圧縮。JPEGはブラウザ自身で読み書きでき、追加のライブラリが要らない。文字中心のPDFでも小さくしたい場合のために、文字が選択できなくなることを明示したうえでページの画像化も用意した。画像の表示サイズまでは解析せず、「最も大きいページ全体に表示されても指定の解像度を下回らない大きさ」を上限にしている。</p></div>
         <div class="decision"><b>閲覧モードは画面の近くのページだけを描画する</b><p>全ページを大きく描画するとメモリが足りなくなるため、画面の前後のページだけを描画し、離れたページは描画結果を捨てる。文字選択は pdf.js の文字レイヤー（画像の上に透明な文字を重ねる仕組み）を使う。</p></div>
         <div class="decision"><b>保存時に、削除したページのデータを取り除く</b><p>pdf-lib はページをコピーするとき、そのページから参照されているものを丸ごとコピーする。全ページで画像の一覧を共有しているPDFや、削除したページへのリンクがあるPDFでは、削除したページのデータまで保存されてしまう。そこで保存前に、(1) ページの描画命令で使っていない画像を一覧から外し、(2) 削除したページへのリンク・参照を切り、(3) どこからも参照されなくなったデータを消す。描画命令を読めないページは、表示が崩れるのを避けるため (1) を行わない。</p></div>
+        <div class="decision"><b>ドライブ連携のためにWeb版を用意する</b><p>ドライブの「アプリで開く」に並べられるのは、Google に登録したWebアプリだけで、Chrome拡張機能は登録できない。そこで拡張機能と同じファイルを GitHub Pages で公開してWeb版とした。PDFの処理は引き続きブラウザ内だけで行うが、プログラムを毎回インターネットから読み込むことになる。リポジトリに悪意あるコードが入ると全利用者に影響するため、通信先の制限（NFR-12）と、変更の確認・GitHubアカウントの保護（11. リスクと対策）で補う。オフラインで使いたい利用者のために、拡張機能版も引き続き提供する。</p></div>
+        <div class="decision"><b>ドライブの権限は drive.file だけにする</b><p>利用者が「アプリで開く」で選んだファイルと、このツールで保存したファイルだけを扱える最小の権限。ドライブ全体を読める権限は求めない。OAuth の同意画面を「内部」にして、G&amp;N のアカウントだけが使えるようにする（社内限定のため Google の審査は不要）。</p></div>
         <div class="decision"><b>ライブラリはCDNを使わず同梱する</b><p>オフラインで動作させ、外部への通信をゼロにするため。拡張機能のセキュリティ方針（CSP）上もこの方が確実。</p></div>
       </div>
     </section>
@@ -384,6 +393,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td>圧縮：圧縮後のPDFの色・向き・回転が元と一致すること（目視）、文字だけのPDFでは「これ以上小さくできません」と表示すること</td><td><span class="chip ok">合格</span></td></tr>
           <tr><td>閲覧：編集後のページ並び（削除・回転）の反映、前後移動・ページ番号入力・← → キー、拡大時の表示位置の維持、編集モードへの切り替えとダブルクリックでの表示</td><td><span class="chip ok">合格</span></td></tr>
           <tr><td>削除したページのデータ：全ページで画像の一覧を共有するPDF、削除するページへのリンクがあるPDFで、3ページ中1ページを削除して保存したとき、画像が3個→2個・ページの実体が2個になり、ファイルが62KB→43KBになること。残したページの画像は正しく表示されること（通常の保存・圧縮して保存の両方）</td><td><span class="chip ok">合格</span></td></tr>
+          <tr><td>Web版：通信制限（CSP）を入れた状態で、読み込み・サムネイル・閲覧（文字選択）・保存・圧縮が動くこと、制限違反が出ないこと、Google のログイン用スクリプトが読み込めること</td><td><span class="chip ok">合格</span></td></tr>
+          <tr><td>ドライブ連携（Google の代わりに模擬の応答を使用）：「アプリで開く」の情報からファイルを読み込み、1ページ削除して「ドライブに保存」すると、元のフォルダに2ページのPDFが保存されリンクが表示されること。「圧縮して保存」からも保存できること</td><td><span class="chip ok">合格</span></td></tr>
           <tr><td>閲覧：文字の選択・コピー（0°／90°／180°／270°に回転したページを含む）、閲覧中に Delete キーを押してもページが消えないこと</td><td><span class="chip ok">合格</span></td></tr>
         </tbody>
       </table></div>
@@ -396,6 +407,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td>日本語を含む実際の業務PDF（スキャン書類、Word・Excelから作ったPDF）の表示と保存</td><td><span class="chip todo">未実施</span></td></tr>
           <tr><td>100ページ以上・数十MB以上のPDFでの性能（NFR-06）</td><td><span class="chip todo">未実施</span></td></tr>
           <tr><td>実際のスキャン書類・写真入り資料での圧縮率と画質（FR-15）</td><td><span class="chip todo">未実施</span></td></tr>
+          <tr><td>実際の Google ドライブ（マイドライブ・共有ドライブ）での「アプリで開く」→ 編集 → ドライブに保存（FR-18・19）</td><td><span class="chip todo">未実施</span></td></tr>
           <tr><td>暗号化PDF・壊れたPDFを読み込んだときのエラー表示</td><td><span class="chip todo">未実施</span></td></tr>
           <tr><td>ITに不慣れな社員が手順書だけで導入できること</td><td><span class="chip todo">未実施</span></td></tr>
         </tbody>
@@ -415,6 +427,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
         <li>ソースコード・資料・配布用ZIPはすべて GitHub で公開する。</li>
         <li>資料（本書・<a href="install.html">導入手順書</a>）は GitHub Pages で公開する。リポジトリの <code>docs/</code> フォルダの内容がそのままサイトになる。</li>
         <li>配布用ZIPは <a href="https://github.com/Gaccho-code/pdf-editor/releases">GitHub Releases</a> に置く。導入手順書のダウンロードボタンは常に最新版を指す。</li>
+        <li>Web版は <code>main</code> へのプッシュで GitHub Pages（<code>/app/</code>）に自動で公開される。</li>
+        <li>Googleドライブ連携は、G&amp;N の Google Workspace 管理者が <a href="drive-setup.html">設定手順</a> に沿って Google Cloud と Marketplace を設定し、管理コンソールから社員に配布する。</li>
         <li>社内には、導入手順書のURLを案内する。利用者は手順書に沿ってZIPを展開し、Chromeの「デベロッパー モード」から読み込む。</li>
       </ol>
       <h3>10.2 バージョン管理と更新</h3>
@@ -444,6 +458,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td>利用者が拡張機能のフォルダを移動・削除する</td><td><span class="chip todo">中</span> ツールが使えなくなる</td><td>手順書で「ドキュメント」フォルダに置くよう指定し、注意を明記している。</td></tr>
           <tr><td>Chromeの仕様変更で、フォルダからの読み込みが制限される</td><td><span class="chip todo">中</span> 新規導入ができなくなる</td><td>Chromeの更新情報を確認し、必要ならストア配布に移行する。</td></tr>
           <tr><td>リポジトリと資料が社外からも見える</td><td><span class="chip todo">小</span> 社内事情が外部に知られる</td><td>秘密情報・個人名・連絡先・社内URLを載せない。公開前とリリースのたびに内容を確認する。</td></tr>
+          <tr><td>Web版のリポジトリに悪意あるコードが入る（GitHubアカウントの乗っ取り、確認不足の変更など）</td><td><span class="chip risk">大</span> 開いたPDFが外部に送られるおそれ</td><td>通信先を自身と Google に制限する（NFR-12）。書き込み権限を持つ全員の GitHubアカウントで2段階認証を必須にする。<code>main</code> への強制プッシュ・削除を禁止し、変更は内容を確認してから取り込む。</td></tr>
           <tr><td>同梱ライブラリの脆弱性</td><td><span class="chip todo">中</span> 細工されたPDFを開いたときの安全性</td><td>ライブラリの更新情報を定期的に確認し、更新版を配布する。</td></tr>
           <tr><td>特殊なPDFで表示や保存が崩れる</td><td><span class="chip todo">中</span> 誤ったファイルを送付するおそれ</td><td>元ファイルを変更しない設計とし、保存後のPDFを確認するよう案内する。</td></tr>
         </tbody>
@@ -457,6 +472,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
         <tbody>
           <tr><td class="nw"><span class="chip ok">完了</span> 開発</td><td>v1.0.0（並べ替え・削除・回転・結合）、v1.1.0（表示倍率）、v1.2.0（ファイルサイズの圧縮）、v1.3.0（閲覧モード）</td><td>完了</td></tr>
           <tr><td class="nw"><span class="chip ok">完了</span> 公開</td><td>GitHub でソースコード・資料・配布用ZIPを公開</td><td>完了</td></tr>
+          <tr><td class="nw"><span class="chip todo">次</span> ドライブ連携</td><td>G&amp;N の管理者が Google Cloud・Marketplace を設定し、クライアントIDをツールに設定して動作確認する</td><td>ドライブの「アプリで開く」から編集・保存できる</td></tr>
           <tr><td class="nw"><span class="chip todo">次</span> 検証</td><td>9.2 の未実施テストと、情報システム担当への管理ポリシーの確認</td><td>全項目が合格</td></tr>
           <tr><td class="nw"><span class="chip plan">予定</span> 試用</td><td>数名の社員に導入・利用してもらい、手順書と使い勝手の改善点を集める</td><td>試用者全員が導入完了</td></tr>
           <tr><td class="nw"><span class="chip plan">予定</span> 全社展開</td><td>配布方法を決定し、全社に案内する</td><td>案内の完了</td></tr>
@@ -474,12 +490,13 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td class="id">Q-02</td><td>社内のChrome管理ポリシーで、デベロッパー モードの拡張機能が使えるか</td><td>情報システム担当</td></tr>
           <tr><td class="id">Q-03</td><td>問い合わせ窓口・不具合の受付方法（社外から見える場所には載せず、社内で案内する）</td><td>【未定】</td></tr>
           <tr><td class="id">Q-04</td><td>試用の対象者と期間</td><td>【未定】</td></tr>
+          <tr><td class="id">Q-06</td><td>GitHub リポジトリの保護設定（2段階認証の必須化、<code>main</code> への強制プッシュの禁止、変更の確認の運用）</td><td>開発担当</td></tr>
           <tr><td class="id">Q-05</td><td>機能候補（4.1）の優先順位</td><td>試用後に決定</td></tr>
         </tbody>
       </table></div>
     </section>
 
-    <footer>PDF Page Editor 要件定義書 第1.4版 ／ 2026年10月16日 ／ 対象：v1.3.2 ／ <a href="./">トップへ戻る</a></footer>
+    <footer>PDF Page Editor 要件定義書 第1.5版 ／ 2026年10月16日 ／ 対象：v1.4.0 ／ <a href="./">トップへ戻る</a></footer>
   </main>
 </div>
 </body>

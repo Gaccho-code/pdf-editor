@@ -3,6 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Web版の安全対策: 読み込むプログラムと通信先を、このサイト自身と Google(ログイン・ドライブ)だけに制限する。
+       万一ほかのサイトへPDFを送るようなコードが紛れ込んでも、ブラウザが通信を止める。
+       (拡張機能版では、より厳しい拡張機能自体の制限が優先される) -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://accounts.google.com/gsi/client; connect-src 'self' https://www.googleapis.com https://accounts.google.com/gsi/; frame-src https://accounts.google.com/gsi/; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; img-src 'self' blob: data:; font-src 'self' data:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>PDF Page Editor</title>
   <link rel="icon" href="icons/icon48.png?v=red">
   <link rel="stylesheet" href="editor.css">
@@ -46,6 +50,7 @@
       <span class="sep"></span>
       <button id="btn-reset" title="すべて閉じて最初から">クリア</button>
       <button id="btn-compress" title="ファイルサイズを小さくして保存" disabled>圧縮して保存</button>
+      <button id="btn-drive-save" title="元のPDFと同じドライブのフォルダに、新しいファイルとして保存" hidden>ドライブに保存</button>
       <button id="btn-save" class="primary" title="編集後のPDFをダウンロード (⌘/Ctrl+S)" disabled>PDFを保存</button>
     </div>
   </header>
@@ -73,6 +78,7 @@
       <div class="dialog-actions">
         <button value="cancel" formnovalidate>閉じる</button>
         <button type="button" id="btn-compress-run" class="primary">圧縮する</button>
+        <button type="button" id="btn-compress-drive" hidden>ドライブに保存</button>
         <button type="button" id="btn-compress-download" class="primary" hidden>ダウンロード</button>
       </div>
     </form>
@@ -83,6 +89,12 @@
   <main id="main">
     <div id="empty" class="empty">
       <div class="drop-hint">
+        <div id="drive-open" class="drive-open" hidden>
+          <p class="big">Googleドライブで選んだPDFを開きます</p>
+          <p><button id="btn-drive-open" class="primary">ドライブから読み込む</button></p>
+          <p class="note" id="drive-open-note">Googleアカウントの確認画面が出たら、続けて進めてください。</p>
+          <hr>
+        </div>
         <p class="big">PDFをここにドラッグ＆ドロップ</p>
         <p>または <button id="btn-open" class="link">ファイルを選択</button></p>
         <p class="note">ファイルは外部に送信されず、このブラウザ内だけで処理されます。</p>

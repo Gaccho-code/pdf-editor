@@ -7,6 +7,7 @@ import * as pdfjsLib from './lib/pdf.min.mjs';
 import { COMPRESS_LEVELS, recompressImages, rasterizePages } from './compress.js';
 import { Viewer, VIEW_ZOOM_LEVELS } from './viewer.js';
 import { removeUnusedData } from './cleanup.js';
+import { driveEnabled, readOpenRequest, preloadGoogleLogin, openFromDrive, saveToDrive } from './drive.js';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL('./lib/pdf.worker.min.mjs', import.meta.url).href;
 const PDFJS_OPTIONS = {
@@ -56,6 +57,9 @@ const viewerEl = $('viewer');
 const pageInput = $('page-input');
 const pageTotal = $('page-total');
 const btn = {
+  driveSave: $('btn-drive-save'),
+  driveOpen: $('btn-drive-open'),
+  compressDrive: $('btn-compress-drive'),
   modeEdit: $('mode-edit'),
   modeView: $('mode-view'),
   prev: $('btn-prev'),
@@ -120,7 +124,8 @@ async function addFiles(fileList) {
       const editDoc = await PDFDocument.load(bytes);
       // pdf.jsはバッファをWorkerへ転送して使えなくするのでコピーを渡す
       const viewDoc = await pdfjsLib.getDocument({ ...PDFJS_OPTIONS, data: bytes.slice() }).promise;
-      const src = sources.push({ name: file.name, viewDoc, editDoc }) - 1;
+      // drive: ドライブから開いたファイルなら { id, name, parents }(保存先のフォルダを決めるのに使う)
+      const src = sources.push({ name: file.name, viewDoc, editDoc, drive: file.drive ?? null }) - 1;
       for (let i = 0; i < viewDoc.numPages; i++) {
         added.push({ id: nextId++, src, index: i, rotation: 0 });
       }
@@ -292,6 +297,8 @@ function updateToolbar() {
   btn.compress.disabled = pages.length === 0;
   btn.reset.disabled = sources.length === 0;
   btn.modeView.disabled = pages.length === 0;
+  btn.driveSave.hidden = !driveFolder();
+  btn.driveSave.disabled = pages.length === 0;
   btn.add.textContent = sources.length ? '＋ PDFを追加(結合)' : '＋ PDFを開く';
 
   if (!pages.length) setStatus('');
@@ -513,6 +520,7 @@ function resetCompressResult() {
   compressResult.textContent = '';
   btn.compressRun.hidden = false;
   btn.compressDownload.hidden = true;
+  btn.compressDrive.hidden = true;
 }
 
 async function runCompress() {
@@ -546,6 +554,7 @@ async function runCompress() {
       compressResult.innerHTML = `<b>${formatSize(before)} → ${formatSize(after)}</b>（${rate}%小さくなりました）`;
       btn.compressRun.hidden = true;
       btn.compressDownload.hidden = false;
+      btn.compressDrive.hidden = !driveFolder();
       btn.compressDownload.focus();
     } else {
       compressResult.textContent = `これ以上小さくできませんでした（${formatSize(before)}）。` +
@@ -559,6 +568,19 @@ async function runCompress() {
     compressing = false;
     btn.compressRun.disabled = false;
     compressDialog.querySelectorAll('input[name="level"]').forEach((el) => (el.disabled = false));
+  }
+}
+
+async function saveCompressedToDrive() {
+  if (!compressed) return;
+  btn.compressDrive.disabled = true;
+  try {
+    await uploadToDrive(compressed.bytes, outputName('compressed'));
+    compressDialog.close();
+  } catch {
+    // エラーの内容は uploadToDrive が表示済み
+  } finally {
+    btn.compressDrive.disabled = false;
   }
 }
 
@@ -602,6 +624,9 @@ btn.save.addEventListener('click', save);
 btn.compress.addEventListener('click', openCompressDialog);
 btn.compressRun.addEventListener('click', runCompress);
 btn.compressDownload.addEventListener('click', downloadCompressed);
+btn.compressDrive.addEventListener('click', saveCompressedToDrive);
+btn.driveSave.addEventListener('click', saveEditedToDrive);
+btn.driveOpen.addEventListener('click', loadFromDrive);
 compressDialog.addEventListener('change', resetCompressResult); // 圧縮レベルを変えたら結果を捨ててやり直す
 compressDialog.addEventListener('cancel', (e) => {
   if (compressing) e.preventDefault(); // 圧縮中はEscで閉じない
@@ -793,6 +818,85 @@ function viewModeKeys(e, mod, key) {
 window.addEventListener('beforeunload', (e) => {
   if (dirty && pages.length) e.preventDefault();
 });
+
+// ---- Googleドライブ連携(Web版のみ) ----
+const openRequest = readOpenRequest();
+
+// 保存先: ドライブから開いた最初のファイルと同じフォルダ
+function driveFolder() {
+  if (!driveEnabled) return null;
+  const src = sources.find((s) => s.drive);
+  return src ? (src.drive.parents[0] ?? 'root') : null;
+}
+
+async function loadFromDrive() {
+  btn.driveOpen.disabled = true;
+  setStatus('Googleドライブから読み込み中…');
+  try {
+    const files = await openFromDrive(openRequest.ids, openRequest.userId);
+    await addFiles(files);
+  } catch (err) {
+    console.error(err);
+    flash(err.message);
+  } finally {
+    btn.driveOpen.disabled = false;
+  }
+}
+
+async function saveEditedToDrive() {
+  if (!pages.length) return;
+  btn.driveSave.disabled = true;
+  try {
+    setStatus('PDFを作成中…');
+    let bytes;
+    try {
+      bytes = await (await buildPdf()).save();
+    } catch (err) {
+      console.error(err);
+      alert('PDFの作成に失敗しました。\n' + err.message);
+      updateToolbar();
+      return;
+    }
+    await uploadToDrive(bytes, outputName());
+  } catch {
+    // エラーの内容は uploadToDrive が表示済み
+  } finally {
+    btn.driveSave.disabled = pages.length === 0;
+  }
+}
+
+// 保存後は、保存したファイルをドライブで開けるリンクをしばらく表示する
+async function uploadToDrive(bytes, name) {
+  setStatus('Googleドライブに保存中…');
+  try {
+    const saved = await saveToDrive(bytes, name, driveFolder(), openRequest?.userId);
+    dirty = false;
+    const link = document.createElement('a');
+    link.href = saved.webViewLink;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.textContent = 'ドライブで開く';
+    clearTimeout(flashTimer);
+    statusEl.replaceChildren(`「${saved.name}」を元のPDFと同じフォルダに保存しました。　`, link);
+    flashTimer = setTimeout(updateToolbar, 20_000);
+  } catch (err) {
+    console.error(err);
+    flash(err.message);
+    throw err;
+  }
+}
+
+if (openRequest) {
+  const panel = $('drive-open');
+  panel.hidden = false;
+  if (!driveEnabled) {
+    btn.driveOpen.disabled = true;
+    $('drive-open-note').textContent = /^https?:$/.test(location.protocol)
+      ? 'Googleドライブ連携の設定がまだ完了していません。管理者にお問い合わせください。'
+      : 'Googleドライブから開くには、Web版を使ってください。';
+  }
+}
+if (driveEnabled) preloadGoogleLogin()?.catch((err) => console.warn(err));
 
 applyZoom();
 render();

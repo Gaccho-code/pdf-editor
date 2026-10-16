@@ -6,3 +6,4 @@ Thumbs.db
 .idea/
 *.zip
 dist/
+_site/

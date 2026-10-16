@@ -201,6 +201,12 @@ body[data-mode="view"] .edit-only { display: none; }
 .textLayer[data-main-rotation="180"] { transform: rotate(180deg) translate(-100%, -100%); }
 .textLayer[data-main-rotation="270"] { transform: rotate(270deg) translateX(-100%); }
 
+/* ---- Googleドライブ連携(Web版) ---- */
+.drive-open { margin-bottom: 8px; }
+.drive-open .primary { font-size: 15px; padding: 8px 20px; }
+.drive-open hr { border: 0; border-top: 1px solid var(--border); margin: 24px 0; }
+.status a { color: var(--accent); }
+
 dialog {
   width: min(480px, calc(100vw - 32px));
   padding: 24px;

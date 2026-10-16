@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ドライブ連携の設定手順</title>
+<link rel="icon" href="icon.png?v=red">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="doc.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">管理者向け · 設定手順</div>
+    <h1>Googleドライブの「アプリで開く」に PDF Page Editor を追加する手順</h1>
+    <p class="lead">Google Workspace の管理者（または管理者の許可を得たアカウント）が、最初に1回だけ行う設定です。所要時間は30〜60分ほどです。設定が終わると、社員はドライブでPDFを右クリック →「アプリで開く」→「PDF Page Editor」で編集できるようになり、インストール作業はいりません。</p>
+    <p class="note"><strong>注意：</strong>Google の管理画面は、項目の名前や場所がときどき変わります。この手順と表示が違う場合は、近い名前の項目を探してください。</p>
+  </header>
+
+  <section>
+    <h2>全体の流れ</h2>
+    <ol>
+      <li><b>A.</b> Google Cloud にプロジェクトを作り、ログインの設定をする → <strong>クライアントIDを開発担当に伝える</strong></li>
+      <li><b>B.</b> ドライブの「アプリで開く」に表示する設定をする</li>
+      <li><b>C.</b> Google Workspace Marketplace に社内限定で登録する</li>
+      <li><b>D.</b> 管理コンソールから社員に配布する</li>
+      <li><b>E.</b> 動作を確認する</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>このツールが扱うデータと権限</h2>
+    <ul>
+      <li>PDFは「Googleドライブ ⇔ 利用者のブラウザ」の間で直接やり取りされます。開発者や第三者のサーバーは通りません。</li>
+      <li>求める権限は <code>drive.file</code> だけです。これは<strong>利用者が「アプリで開く」で選んだファイルと、このツールで保存したファイルにだけ</strong>アクセスできる、最も範囲の狭い権限です。ドライブ全体は見られません。</li>
+      <li>OAuth の同意画面を「内部」にするため、G&amp;N のアカウントでしか使えません。</li>
+      <li>ツールのプログラムは <a href="https://gaccho-code.github.io/pdf-editor/app/">gaccho-code.github.io/pdf-editor/app/</a> から配信されます。ページには「このサイト自身と Google 以外とは通信しない」という制限を入れています。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>A. Google Cloud の設定</h2>
+    <ol>
+      <li><a href="https://console.cloud.google.com/">Google Cloud コンソール</a>に、<strong>G&amp;N の Google アカウント</strong>でログインします。</li>
+      <li>画面上部のプロジェクト選択 → <b class="ui">新しいプロジェクト</b> を押し、次のとおり入力して <b class="ui">作成</b> します。
+        <ul>
+          <li>プロジェクト名：<code>PDF Page Editor</code></li>
+          <li>組織：G&amp;N のドメイン（個人のアカウントや「組織なし」では、手順4の「内部」が選べません）</li>
+        </ul>
+      </li>
+      <li>左のメニュー <b class="ui">APIとサービス</b> → <b class="ui">ライブラリ</b> で次の2つを検索し、それぞれ <b class="ui">有効にする</b> を押します。
+        <ul>
+          <li><code>Google Drive API</code></li>
+          <li><code>Google Workspace Marketplace SDK</code></li>
+        </ul>
+      </li>
+      <li>OAuth の同意画面を設定します（メニューでは <b class="ui">Google Auth Platform</b>、または <b class="ui">APIとサービス</b> → <b class="ui">OAuth 同意画面</b>）。
+        <ul>
+          <li>アプリ名：<code>PDF Page Editor</code></li>
+          <li>ユーザー サポートメール：管理者のメールアドレス</li>
+          <li>対象（User Type）：<strong>内部</strong></li>
+          <li>連絡先メールアドレス：管理者のメールアドレス</li>
+        </ul>
+      </li>
+      <li><b class="ui">データアクセス</b>（または <b class="ui">スコープ</b>）で <b class="ui">スコープを追加</b> を押し、次の1つだけを追加して保存します。
+        <ul><li><code>https://www.googleapis.com/auth/drive.file</code></li></ul>
+      </li>
+      <li><b class="ui">クライアント</b>（または <b class="ui">認証情報</b> → <b class="ui">認証情報を作成</b> → <b class="ui">OAuth クライアント ID</b>）で、次のとおり作成します。
+        <ul>
+          <li>アプリケーションの種類：<strong>ウェブ アプリケーション</strong></li>
+          <li>名前：<code>PDF Page Editor Web</code></li>
+          <li>承認済みの JavaScript 生成元：<code>https://gaccho-code.github.io</code></li>
+          <li>承認済みのリダイレクト URI：空欄のまま</li>
+        </ul>
+      </li>
+      <li>作成後に表示される <strong>クライアントID</strong>（<code>…apps.googleusercontent.com</code> で終わる文字列）を開発担当に伝えます。開発担当がツールに設定して公開します。
+        <div class="note"><strong>クライアントシークレットは伝えないでください。</strong>このツールでは使いません。クライアントIDは公開しても問題のない値です。</div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>B. ドライブの「アプリで開く」に表示する設定</h2>
+    <ol>
+      <li><b class="ui">APIとサービス</b> → <b class="ui">有効な API とサービス</b> → <b class="ui">Google Drive API</b> を開き、<b class="ui">ドライブの UI 統合</b>（Drive UI integration）タブを選びます。</li>
+      <li>次のとおり入力して保存します。
+        <div class="tbl"><table>
+          <tr><th>項目</th><th>入力する内容</th></tr>
+          <tr><td>アプリケーション名</td><td><code>PDF Page Editor</code></td></tr>
+          <tr><td>短い説明</td><td><code>PDFのページの並べ替え・削除・回転・結合・圧縮</code></td></tr>
+          <tr><td>アプリケーション アイコン</td><td>下のアイコンをダウンロードして、求められたサイズのものをアップロード</td></tr>
+          <tr><td>URL を開く（Open URL）</td><td><code>https://gaccho-code.github.io/pdf-editor/app/</code></td></tr>
+          <tr><td>デフォルトの MIME タイプ</td><td><code>application/pdf</code></td></tr>
+          <tr><td>デフォルトのファイル拡張子</td><td><code>pdf</code></td></tr>
+          <tr><td>ファイルの作成（Create with）</td><td>設定しない（チェックを外す）</td></tr>
+          <tr><td>共有ドライブのサポート</td><td>オン</td></tr>
+        </table></div>
+      </li>
+      <li>アイコン（クリックでダウンロード）：
+        <div class="icons">
+          <a href="icons/icon32.png" download><img src="icons/icon32.png" width="32" height="32" alt="">32×32</a>
+          <a href="icons/icon96.png" download><img src="icons/icon96.png" width="48" height="48" alt="">96×96</a>
+          <a href="icons/icon128.png" download><img src="icons/icon128.png" width="64" height="64" alt="">128×128</a>
+          <a href="icons/icon256.png" download><img src="icons/icon256.png" width="80" height="80" alt="">256×256</a>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>C. Marketplace に社内限定で登録する</h2>
+    <ol>
+      <li><b class="ui">APIとサービス</b> → <b class="ui">Google Workspace Marketplace SDK</b> → <b class="ui">アプリの構成</b> で、次のとおり設定して保存します。
+        <ul>
+          <li>アプリの公開設定：<strong>非公開</strong>（G&amp;N のユーザーのみ）</li>
+          <li>インストール設定：<strong>管理者のみインストール</strong></li>
+          <li>アプリの統合：<strong>ドライブ アプリ</strong> にチェック</li>
+          <li>OAuth スコープ：<code>https://www.googleapis.com/auth/drive.file</code>（画面の案内で <code>drive.install</code> の追加を求められた場合は、それも追加）</li>
+          <li>デベロッパー情報：管理者の名前・メールアドレス</li>
+        </ul>
+      </li>
+      <li><b class="ui">ストアの掲載情報</b> で、次のとおり入力して <b class="ui">公開</b> します（社内限定なので、Google の審査はありません）。
+        <div class="tbl"><table>
+          <tr><th>項目</th><th>入力する内容</th></tr>
+          <tr><td>アプリ名</td><td><code>PDF Page Editor</code></td></tr>
+          <tr><td>概要</td><td><code>PDFのページの並べ替え・削除・回転・結合・圧縮を、ブラウザの中だけで行うツール</code></td></tr>
+          <tr><td>詳しい説明</td><td>Googleドライブで右クリック →「アプリで開く」から、PDFのページの並べ替え・削除・回転・結合・ファイルサイズの圧縮ができます。PDFは利用者のブラウザの中だけで処理され、外部のサーバーには送信されません。編集結果は元のPDFと同じフォルダに新しいファイルとして保存でき、元のファイルは変更されません。</td></tr>
+          <tr><td>カテゴリ</td><td>仕事効率化</td></tr>
+          <tr><td>アイコン</td><td>128×128 と 32×32（B のアイコンと同じ）</td></tr>
+          <tr><td>スクリーンショット</td><td>ツールでPDFを開いた画面を1枚以上（1280×800 など、画面の指定サイズで撮影）</td></tr>
+          <tr><td>サポート URL</td><td><code>https://gaccho-code.github.io/pdf-editor/</code></td></tr>
+          <tr><td>プライバシー ポリシー URL</td><td><code>https://gaccho-code.github.io/pdf-editor/privacy.html</code></td></tr>
+          <tr><td>利用規約 URL</td><td><code>https://gaccho-code.github.io/pdf-editor/privacy.html#terms</code></td></tr>
+        </table></div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>D. 管理コンソールから社員に配布する</h2>
+    <ol>
+      <li><a href="https://admin.google.com/">Google 管理コンソール</a>を開き、<b class="ui">アプリ</b> → <b class="ui">Google Workspace Marketplace アプリ</b> → <b class="ui">アプリリスト</b> を開きます。</li>
+      <li><b class="ui">アプリを追加</b> → <b class="ui">社内アプリ</b>（または <b class="ui">ドメインにインストール</b>）から <b class="ui">PDF Page Editor</b> を選びます。</li>
+      <li><b class="ui">管理者によるインストール</b> を選び、対象を <strong>組織全体</strong>（または対象の部署）にして、表示される権限（<code>drive.file</code>）に同意します。</li>
+      <li>社員のドライブに表示されるまで、数分〜最大24時間かかることがあります。</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>E. 動作を確認する</h2>
+    <ol>
+      <li>ドライブでPDFを右クリック → <b class="ui">アプリで開く</b> → <b class="ui">PDF Page Editor</b> を選びます。</li>
+      <li>新しいタブでツールが開いたら、<b class="ui">ドライブから読み込む</b> を押します。初回だけ Google アカウントの確認画面が出るので、続けて進めます。</li>
+      <li>ページが表示されたら、1ページ削除して <b class="ui">ドライブに保存</b> を押します。</li>
+      <li>元のPDFと同じフォルダに <code>元の名前_edited.pdf</code> ができていれば完了です。</li>
+    </ol>
+    <div class="box">
+      <b>うまくいかないとき</b>
+      <ul>
+        <li>「アプリで開く」に出てこない：D の配布から時間がたっていない可能性があります。数時間おいて、ドライブを再読み込みしてください。</li>
+        <li>「ドライブから読み込む」で何も起きない：ブラウザがポップアップをブロックしていないか確認してください。</li>
+        <li>「設定がまだ完了していません」と表示される：A の手順7のクライアントIDが、まだツールに設定されていません。開発担当に連絡してください。</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>PDF Page Editor ／ <a href="./">トップへ戻る</a> ／ <a href="privacy.html">プライバシーポリシー</a></footer>
+</div>
+</body>
+</html>

@@ -3,7 +3,9 @@
 PDFのページを **並べ替え・削除・回転・結合** し、**ファイルサイズを圧縮** できる無料のChrome拡張機能です。
 処理はすべてブラウザ内で完結し、PDFを外部のサーバーに送信しません。
 
-- 導入手順・ダウンロード：https://gaccho-code.github.io/pdf-editor/install.html
+- Web版（インストール不要）：https://gaccho-code.github.io/pdf-editor/app/
+- 導入手順・ダウンロード（拡張機能版）：https://gaccho-code.github.io/pdf-editor/install.html
+- Googleドライブ連携の設定手順（管理者向け）：https://gaccho-code.github.io/pdf-editor/drive-setup.html
 - 要件定義書：https://gaccho-code.github.io/pdf-editor/requirements.html
 - 最新版のZIP：https://github.com/Gaccho-code/pdf-editor/releases/latest/download/pdf-editor.zip
 
@@ -51,13 +53,16 @@ editor.html/css/js  編集画面
 compress.js     ファイルサイズの圧縮（画像の再圧縮・ページの画像化）
 viewer.js       閲覧モード（ページの大きな表示・文字選択）
 cleanup.js      保存時に、削除したページだけで使っていたデータ（画像・ページ本体）を取り除く
+drive.js        Googleドライブ連携（Web版のみ。「アプリで開く」からの読み込み・ドライブへの保存）
 lib/            同梱ライブラリ（CDNは使わない）
   pdf.min.mjs, pdf.worker.min.mjs, cmaps/, standard_fonts/  … pdf.js 4.10.38（Apache-2.0）サムネイル表示用
   pdf-lib.min.js  … pdf-lib 1.17.1（MIT）PDFの書き出し用
 icons/          拡張機能アイコン
 scripts/package.sh  配布用ZIPを dist/ に作成
-docs/           GitHub Pages で公開する資料（トップ・導入手順書・要件定義書）
+docs/           GitHub Pages で公開する資料（トップ・導入手順書・要件定義書・ドライブ連携の設定手順・プライバシーポリシー）
+scripts/build-site.sh  GitHub Pages に公開するサイト（資料＋Web版 /app/）を _site/ に組み立てる
 .github/workflows/release.yml  タグのプッシュでZIPを作り Releases に登録
+.github/workflows/pages.yml    main へのプッシュでサイトを組み立てて GitHub Pages に公開
 ```
 
 ## リリース手順
@@ -73,9 +78,17 @@ GitHub Actions がZIPを作り、`pdf-editor.zip` という名前で Releases �
 
 手元でZIPだけ作る場合は `./scripts/package.sh` を実行する（`dist/pdf-editor-v<版>.zip` ができる）。
 
-## 資料（GitHub Pages）
+## 資料とWeb版（GitHub Pages）
 
-`docs/` の内容が、`main` ブランチへのプッシュで https://gaccho-code.github.io/pdf-editor/ に反映される。リポジトリは公開なので、秘密情報・個人名・連絡先・社内URLは載せないこと。
+`main` ブランチにプッシュすると、GitHub Actions（`pages.yml`）が `docs/` の資料とツール本体を組み立てて https://gaccho-code.github.io/pdf-editor/ に公開する。ツール本体は `/app/` に置かれ、拡張機能と同じファイルをそのまま使う（`manifest.json`・`background.js` は拡張機能専用なので含めない）。リポジトリは公開なので、秘密情報・個人名・連絡先・社内URLは載せないこと。
+
+**Web版の安全対策：** `editor.html` の Content-Security-Policy で、読み込むプログラムと通信先をこのサイト自身と Google（ログイン・ドライブAPI）だけに制限している。`main` に入ったコードはそのまま全利用者のブラウザで動くので、変更は必ず内容を確認してから取り込むこと。
+
+## Googleドライブ連携
+
+ドライブの「アプリで開く」から起動されると、URLの `state` に選ばれたファイルIDが付く。利用者が「ドライブから読み込む」を押すと Google ログイン（`drive.file` 権限のみ）でファイルを取得し、編集後は「ドライブに保存」で元のPDFと同じフォルダに新しいファイルとして保存する。
+
+`drive.js` の `DRIVE_CLIENT_ID` が空のあいだは、ドライブ連携は表示されない。Google Cloud の設定（[設定手順](https://gaccho-code.github.io/pdf-editor/drive-setup.html)）で作ったOAuthクライアントIDをここに設定して公開する。クライアントIDは秘密情報ではない。拡張機能版では Google のスクリプトを読み込めないため、ドライブ連携は使えない。
 
 ビルド工程はありません。ファイルを編集したら `chrome://extensions` で再読み込みすれば反映されます。
 
