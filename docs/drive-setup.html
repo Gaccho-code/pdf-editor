@@ -15,9 +15,23 @@
   <header>
     <div class="eyebrow">管理者向け · 設定手順</div>
     <h1>Googleドライブの「アプリで開く」に PDF Page Editor を追加する手順</h1>
-    <p class="lead">Google Workspace の管理者（または管理者の許可を得たアカウント）が、最初に1回だけ行う設定です。所要時間は30〜60分ほどです。設定が終わると、社員はドライブでPDFを右クリック →「アプリで開く」→「PDF Page Editor」で編集できるようになり、インストール作業はいりません。</p>
+    <p class="lead">最初に1回だけ行う設定です。所要時間は30〜60分ほどです。設定が終わると、社員はドライブでPDFを右クリック →「アプリで開く」→「PDF Page Editor」で編集できるようになり、インストール作業はいりません。</p>
     <p class="note"><strong>注意：</strong>Google の管理画面は、項目の名前や場所がときどき変わります。この手順と表示が違う場合は、近い名前の項目を探してください。</p>
   </header>
+
+  <section>
+    <h2>だれが作業するか・費用</h2>
+    <div class="tbl"><table>
+      <tr><th>手順</th><th>作業できる人</th></tr>
+      <tr><td>A〜C（Google Cloud・ドライブ・Marketplace の設定）</td><td>G&amp;N の Google アカウントを持つ担当者（Workspace の管理者でなくてもよい）</td></tr>
+      <tr><td>D（社員への配布）</td><td><strong>Workspace の管理者のみ</strong></td></tr>
+      <tr><td>E（動作確認）</td><td>配布されたアカウントなら誰でも</td></tr>
+    </table></div>
+    <ul>
+      <li><strong>費用はかかりません。</strong>Google Cloud のプロジェクト作成、Drive API、OAuth、Marketplace SDK（社内限定の登録）はすべて無料で、請求先アカウント（支払い方法）の設定もいりません。途中で請求先の設定を求められても、この手順では不要です。</li>
+      <li>「プロジェクトを作成する権限がありません」と表示された場合は、Workspace の管理者に依頼してください（初期設定では、社員なら誰でも作成できます）。</li>
+    </ul>
+  </section>
 
   <section>
     <h2>全体の流れ</h2>
@@ -47,9 +61,11 @@
       <li>画面上部のプロジェクト選択 → <b class="ui">新しいプロジェクト</b> を押し、次のとおり入力して <b class="ui">作成</b> します。
         <ul>
           <li>プロジェクト名：<code>PDF Page Editor</code></li>
-          <li>組織：G&amp;N のドメイン（個人のアカウントや「組織なし」では、手順4の「内部」が選べません）</li>
+          <li>組織：G&amp;N のドメイン（個人のアカウントや「組織なし」では、後の手順で「内部」が選べません）</li>
         </ul>
+        <div class="note"><strong>確認：</strong>作成後、画面上部のプロジェクト名を押して表示される一覧で、このプロジェクトの組織が G&amp;N のドメインになっていることを確かめてください。別の組織（LumiNyte など）や「組織なし」に作ると、G&amp;N の社員が使えません。</div>
       </li>
+      <li><b class="ui">IAM と管理</b> → <b class="ui">IAM</b> → <b class="ui">アクセス権を付与</b> で、Workspace の管理者を <strong>オーナー</strong> として追加します。作業した担当者の異動や退職のあとも、設定を変えられるようにするためです。</li>
       <li>左のメニュー <b class="ui">APIとサービス</b> → <b class="ui">ライブラリ</b> で次の2つを検索し、それぞれ <b class="ui">有効にする</b> を押します。
         <ul>
           <li><code>Google Drive API</code></li>
@@ -75,7 +91,7 @@
           <li>承認済みのリダイレクト URI：空欄のまま</li>
         </ul>
       </li>
-      <li>作成後に表示される <strong>クライアントID</strong>（<code>…apps.googleusercontent.com</code> で終わる文字列）を開発担当に伝えます。開発担当がツールに設定して公開します。
+      <li>作成後に表示される <strong>クライアントID</strong>（<code>…apps.googleusercontent.com</code> で終わる文字列）を開発担当に伝えます。開発担当がツールに設定して公開します。（2026年10月16日に設定済み）
         <div class="note"><strong>クライアントシークレットは伝えないでください。</strong>このツールでは使いません。クライアントIDは公開しても問題のない値です。</div>
       </li>
     </ol>
@@ -161,7 +177,7 @@
       <ul>
         <li>「アプリで開く」に出てこない：D の配布から時間がたっていない可能性があります。数時間おいて、ドライブを再読み込みしてください。</li>
         <li>「ドライブから読み込む」で何も起きない：ブラウザがポップアップをブロックしていないか確認してください。</li>
-        <li>「設定がまだ完了していません」と表示される：A の手順7のクライアントIDが、まだツールに設定されていません。開発担当に連絡してください。</li>
+        <li>「設定がまだ完了していません」と表示される：A で作ったクライアントIDが、まだツールに設定されていません。開発担当に連絡してください。</li>
       </ul>
     </div>
   </section>

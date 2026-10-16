@@ -82,7 +82,7 @@ GitHub Actions がZIPを作り、`pdf-editor.zip` という名前で Releases �
 
 `main` ブランチにプッシュすると、GitHub Actions（`pages.yml`）が `docs/` の資料とツール本体を組み立てて https://gaccho-code.github.io/pdf-editor/ に公開する。ツール本体は `/app/` に置かれ、拡張機能と同じファイルをそのまま使う（`manifest.json`・`background.js` は拡張機能専用なので含めない）。リポジトリは公開なので、秘密情報・個人名・連絡先・社内URLは載せないこと。
 
-**Web版の安全対策：** `editor.html` の Content-Security-Policy で、読み込むプログラムと通信先をこのサイト自身と Google（ログイン・ドライブAPI）だけに制限している。`main` に入ったコードはそのまま全利用者のブラウザで動くので、変更は必ず内容を確認してから取り込むこと。
+**Web版の安全対策：** `editor.html` の Content-Security-Policy で、読み込むプログラムと通信先をこのサイト自身と Google（ログイン・ドライブAPI）だけに制限している。`main` に入ったコードはそのまま全利用者のブラウザで動くので、変更は必ず内容を確認してから取り込むこと。`main` ブランチは強制プッシュと削除を禁止している（管理者にも適用）。
 
 ## Googleドライブ連携
 

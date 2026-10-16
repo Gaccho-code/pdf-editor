@@ -141,7 +141,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <h2><span class="no">0</span>文書情報</h2>
       <div class="tbl"><table class="meta-tbl">
         <tr><th>文書名</th><td>PDF Page Editor 要件定義書</td></tr>
-        <tr><th>文書の版</th><td>1.5（2026年10月16日）</td></tr>
+        <tr><th>文書の版</th><td>1.6（2026年10月16日）</td></tr>
         <tr><th>対象バージョン</th><td>PDF Page Editor v1.4.0</td></tr>
         <tr><th>ソースコード</th><td><a href="https://github.com/Gaccho-code/pdf-editor">github.com/Gaccho-code/pdf-editor</a>（公開・MIT License）</td></tr>
         <tr><th>状態</th><td><span class="chip todo">ドラフト</span> 社内レビュー前</td></tr>
@@ -156,6 +156,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td class="nw">1.3</td><td class="nw">2026-10-09</td><td>v1.3.0 の閲覧モード（FR-16）を追加。今後の機能候補からページ拡大表示（FR-F2）を削除</td></tr>
           <tr><td class="nw">1.4</td><td class="nw">2026-10-16</td><td>v1.3.2 で、保存時に削除したページのデータを取り除くようにした（FR-11・NFR-11）</td></tr>
           <tr><td class="nw">1.5</td><td class="nw">2026-10-16</td><td>v1.4.0 のWeb版とGoogleドライブ連携（FR-17〜19、NFR-12）を追加。構成・設計判断・配布・リスク・ロードマップ・未決事項を更新</td></tr>
+          <tr><td class="nw">1.6</td><td class="nw">2026-10-16</td><td>OAuthクライアントIDを設定し、ドライブ連携を有効化。<code>main</code> ブランチの保護を設定。Google 側の設定の作業分担（A〜C は G&amp;N の担当者、D は管理者）と費用（不要）を追記。リポジトリの非公開化を未決事項に追加</td></tr>
         </tbody>
       </table></div>
     </section>
@@ -247,8 +248,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td class="id">FR-15</td><td class="nw">圧縮して保存</td><td>3段階から選んでファイルサイズを小さくし、圧縮前後のサイズを表示してからダウンロードする（<code>_compressed.pdf</code>）。<br>・<b>軽め</b>：JPEG画像を200dpi相当・画質85%に縮小・再圧縮<br>・<b>標準</b>：JPEG画像を150dpi相当・画質75%に縮小・再圧縮（文字・図形はそのまま）<br>・<b>最大</b>：全ページを120dpi・画質65%の画像にする（文字の選択・検索は不可になる）<br>3%以上小さくならない場合は保存せず、その旨を表示する。</td><td><span class="chip ok">実装済</span></td></tr>
           <tr><td class="id">FR-16</td><td class="nw">閲覧モード</td><td>ツールバーの「編集／閲覧」で切り替える（V キー、ページのダブルクリックでも開ける）。ページを縦に並べて大きく表示し、50〜400%の拡大・縮小と「幅に合わせる」（初期表示）、前後のページ・ページ番号入力・← → キーでの移動に対応する。文字を選択してコピーできる。編集中のページ並び（順番・回転・削除）をそのまま表示するので、保存前の確認にも使える。閲覧モードでは削除などの編集操作は効かない。</td><td><span class="chip ok">実装済</span></td></tr>
           <tr><td class="id">FR-17</td><td class="nw">Web版</td><td>インストールせずに <code>https://gaccho-code.github.io/pdf-editor/app/</code> で使える。機能は拡張機能版と同じ（FR-01 の起動方法のみ異なる）。拡張機能版と同じファイルをそのまま公開する。</td><td><span class="chip ok">実装済</span></td></tr>
-          <tr><td class="id">FR-18</td><td class="nw">ドライブから開く</td><td>Googleドライブで PDF を右クリック →「アプリで開く」→「PDF Page Editor」で Web版が開き、「ドライブから読み込む」を押すと選んだPDFを読み込む（初回のみ Google アカウントの確認）。共有ドライブのファイルにも対応する。</td><td><span class="chip todo">Google側の設定待ち</span></td></tr>
-          <tr><td class="id">FR-19</td><td class="nw">ドライブに保存</td><td>ドライブから開いたPDFがある場合、「ドライブに保存」で元のPDFと同じフォルダに新しいファイルとして保存し、保存したファイルへのリンクを表示する。「圧縮して保存」でも選べる。元のファイルは上書きしない。従来どおりのダウンロードも使える。</td><td><span class="chip todo">Google側の設定待ち</span></td></tr>
+          <tr><td class="id">FR-18</td><td class="nw">ドライブから開く</td><td>Googleドライブで PDF を右クリック →「アプリで開く」→「PDF Page Editor」で Web版が開き、「ドライブから読み込む」を押すと選んだPDFを読み込む（初回のみ Google アカウントの確認）。共有ドライブのファイルにも対応する。</td><td><span class="chip todo">配布・動作確認待ち</span></td></tr>
+          <tr><td class="id">FR-19</td><td class="nw">ドライブに保存</td><td>ドライブから開いたPDFがある場合、「ドライブに保存」で元のPDFと同じフォルダに新しいファイルとして保存し、保存したファイルへのリンクを表示する。「圧縮して保存」でも選べる。元のファイルは上書きしない。従来どおりのダウンロードも使える。</td><td><span class="chip todo">配布・動作確認待ち</span></td></tr>
           <tr><td class="id">FR-14</td><td class="nw">エラー表示</td><td>パスワード保護・暗号化されたPDF、壊れたPDFは読み込まず、ファイル名と理由を表示する。</td><td><span class="chip ok">実装済</span></td></tr>
         </tbody>
       </table></div>
@@ -428,7 +429,8 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
         <li>資料（本書・<a href="install.html">導入手順書</a>）は GitHub Pages で公開する。リポジトリの <code>docs/</code> フォルダの内容がそのままサイトになる。</li>
         <li>配布用ZIPは <a href="https://github.com/Gaccho-code/pdf-editor/releases">GitHub Releases</a> に置く。導入手順書のダウンロードボタンは常に最新版を指す。</li>
         <li>Web版は <code>main</code> へのプッシュで GitHub Pages（<code>/app/</code>）に自動で公開される。</li>
-        <li>Googleドライブ連携は、G&amp;N の Google Workspace 管理者が <a href="drive-setup.html">設定手順</a> に沿って Google Cloud と Marketplace を設定し、管理コンソールから社員に配布する。</li>
+        <li>Googleドライブ連携は、<a href="drive-setup.html">設定手順</a> に沿って設定する。Google Cloud・ドライブ・Marketplace の設定（手順 A〜C）は G&amp;N の Google アカウントを持つ担当者が行い（管理者でなくてもよい）、管理コンソールからの社員への配布（手順 D）は Workspace の管理者が行う。Google Cloud は無料の範囲だけを使い、請求先アカウントの設定もいらない。</li>
+        <li>OAuth クライアントID は <code>drive.js</code> の <code>DRIVE_CLIENT_ID</code> に設定している（秘密情報ではない）。作り直した場合は、ここを書き換えて公開する。</li>
         <li>社内には、導入手順書のURLを案内する。利用者は手順書に沿ってZIPを展開し、Chromeの「デベロッパー モード」から読み込む。</li>
       </ol>
       <h3>10.2 バージョン管理と更新</h3>
@@ -458,7 +460,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td>利用者が拡張機能のフォルダを移動・削除する</td><td><span class="chip todo">中</span> ツールが使えなくなる</td><td>手順書で「ドキュメント」フォルダに置くよう指定し、注意を明記している。</td></tr>
           <tr><td>Chromeの仕様変更で、フォルダからの読み込みが制限される</td><td><span class="chip todo">中</span> 新規導入ができなくなる</td><td>Chromeの更新情報を確認し、必要ならストア配布に移行する。</td></tr>
           <tr><td>リポジトリと資料が社外からも見える</td><td><span class="chip todo">小</span> 社内事情が外部に知られる</td><td>秘密情報・個人名・連絡先・社内URLを載せない。公開前とリリースのたびに内容を確認する。</td></tr>
-          <tr><td>Web版のリポジトリに悪意あるコードが入る（GitHubアカウントの乗っ取り、確認不足の変更など）</td><td><span class="chip risk">大</span> 開いたPDFが外部に送られるおそれ</td><td>通信先を自身と Google に制限する（NFR-12）。書き込み権限を持つ全員の GitHubアカウントで2段階認証を必須にする。<code>main</code> への強制プッシュ・削除を禁止し、変更は内容を確認してから取り込む。</td></tr>
+          <tr><td>Web版のリポジトリに悪意あるコードが入る（GitHubアカウントの乗っ取り、確認不足の変更など）</td><td><span class="chip risk">大</span> 開いたPDFが外部に送られるおそれ</td><td>通信先を自身と Google に制限する（NFR-12）。<code>main</code> への強制プッシュ・削除は禁止済み（管理者にも適用）。書き込み権限を持つ全員が GitHubアカウントの2段階認証をオンにする（Q-06）。変更は内容を確認してから取り込む。</td></tr>
           <tr><td>同梱ライブラリの脆弱性</td><td><span class="chip todo">中</span> 細工されたPDFを開いたときの安全性</td><td>ライブラリの更新情報を定期的に確認し、更新版を配布する。</td></tr>
           <tr><td>特殊なPDFで表示や保存が崩れる</td><td><span class="chip todo">中</span> 誤ったファイルを送付するおそれ</td><td>元ファイルを変更しない設計とし、保存後のPDFを確認するよう案内する。</td></tr>
         </tbody>
@@ -472,7 +474,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
         <tbody>
           <tr><td class="nw"><span class="chip ok">完了</span> 開発</td><td>v1.0.0（並べ替え・削除・回転・結合）、v1.1.0（表示倍率）、v1.2.0（ファイルサイズの圧縮）、v1.3.0（閲覧モード）</td><td>完了</td></tr>
           <tr><td class="nw"><span class="chip ok">完了</span> 公開</td><td>GitHub でソースコード・資料・配布用ZIPを公開</td><td>完了</td></tr>
-          <tr><td class="nw"><span class="chip todo">次</span> ドライブ連携</td><td>G&amp;N の管理者が Google Cloud・Marketplace を設定し、クライアントIDをツールに設定して動作確認する</td><td>ドライブの「アプリで開く」から編集・保存できる</td></tr>
+          <tr><td class="nw"><span class="chip todo">次</span> ドライブ連携</td><td>OAuthクライアントIDの設定まで完了。残りは Marketplace への登録・管理者による社員への配布と、実際のドライブでの動作確認</td><td>ドライブの「アプリで開く」から編集・保存できる</td></tr>
           <tr><td class="nw"><span class="chip todo">次</span> 検証</td><td>9.2 の未実施テストと、情報システム担当への管理ポリシーの確認</td><td>全項目が合格</td></tr>
           <tr><td class="nw"><span class="chip plan">予定</span> 試用</td><td>数名の社員に導入・利用してもらい、手順書と使い勝手の改善点を集める</td><td>試用者全員が導入完了</td></tr>
           <tr><td class="nw"><span class="chip plan">予定</span> 全社展開</td><td>配布方法を決定し、全社に案内する</td><td>案内の完了</td></tr>
@@ -490,13 +492,14 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <tr><td class="id">Q-02</td><td>社内のChrome管理ポリシーで、デベロッパー モードの拡張機能が使えるか</td><td>情報システム担当</td></tr>
           <tr><td class="id">Q-03</td><td>問い合わせ窓口・不具合の受付方法（社外から見える場所には載せず、社内で案内する）</td><td>【未定】</td></tr>
           <tr><td class="id">Q-04</td><td>試用の対象者と期間</td><td>【未定】</td></tr>
-          <tr><td class="id">Q-06</td><td>GitHub リポジトリの保護設定（2段階認証の必須化、<code>main</code> への強制プッシュの禁止、変更の確認の運用）</td><td>開発担当</td></tr>
+          <tr><td class="id">Q-06</td><td>GitHub の書き込み権限を持つ全員（現在3名）の2段階認証の確認。<code>main</code> への強制プッシュ・削除の禁止は設定済み。変更をプルリクエストでレビューしてから取り込む運用にするか</td><td>開発担当</td></tr>
+          <tr><td class="id">Q-07</td><td>リポジトリを非公開にするか。無料プランのまま非公開にすると、Web版・資料のページ（GitHub Pages）と、ZIPのダウンロードが使えなくなる。Web版のプログラムは、非公開にしてもページを開けば誰でも見られる。非公開にする場合は、有料プラン（GitHub Pro）にするか、ソース用（非公開）と公開用の2つのリポジトリに分ける</td><td>開発担当</td></tr>
           <tr><td class="id">Q-05</td><td>機能候補（4.1）の優先順位</td><td>試用後に決定</td></tr>
         </tbody>
       </table></div>
     </section>
 
-    <footer>PDF Page Editor 要件定義書 第1.5版 ／ 2026年10月16日 ／ 対象：v1.4.0 ／ <a href="./">トップへ戻る</a></footer>
+    <footer>PDF Page Editor 要件定義書 第1.6版 ／ 2026年10月16日 ／ 対象：v1.4.0 ／ <a href="./">トップへ戻る</a></footer>
   </main>
 </div>
 </body>
